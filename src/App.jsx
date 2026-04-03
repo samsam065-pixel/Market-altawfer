@@ -50,9 +50,34 @@ const[combo,setCombo]=useState(0);
 const[showCombo,setShowCombo]=useState(false);
 const[hintsLeft,setHintsLeft]=useState(2);
 const[hintCells,setHintCells]=useState(null);
-const[unlockedLevels,setUnlockedLevels]=useState(1);
+const[// استرجاع المرحلة المحفوظة عند بداية التشغيل
+const [unlockedLevels, setUnlockedLevels] = useState(() => {
+  const saved = localStorage.getItem('unlockedLevels');
+  return saved ? parseInt(saved) : 1;
+});
+
+// حفظ المرحلة الجديدة تلقائياً كلما فزت بمستوى
+  }, [unlockedLevels]);
+
+
+const [extraMovesUsed, setExtraMovesUsed] = useState(false);
+const handleExtraMoves = () => {
+  if (!extraMovesUsed && moves > 0) {
+    setMoves(m => m + 5);
+    setExtraMovesUsed(true);
+  }
+};
+
 const lv=LEVELS[currentLevel];
-const startLevel=useCallback((idx)=>{setCurrentLevel(idx);setBoard(createBoard());setScore(0);setMoves(LEVELS[idx].moves);setSelected(null);setAnimating(false);setMatchedCells([]);setHintsLeft(2);setHintCells(null);setCombo(0);setScreen("game");},[]);
+const  startLevel = useCallback((idx) => {
+    setExtraMovesUsed(false);
+    setCurrentLevel(idx);
+    setScore(0);
+    setMoves(LEVELS[idx].moves);
+    setScreen("game");
+    setBoard(createBoard());
+  }, [createBoard]);
+
 const processMatches=useCallback((b,cc,rs,ml,ts,li)=>{const matches=findMatches(b);if(matches.length===0){setAnimating(false);setMatchedCells([]);if(cc>1){playCombo();setCombo(cc);setShowCombo(true);setTimeout(()=>setShowCombo(false),1200);}if(rs>=ts){playWin();setTimeout(()=>{const next=li+1;if(next>=LEVELS.length)setScreen("win");else{setUnlockedLevels(u=>Math.max(u,next+1));setScreen("levelUp");}},500);}else if(ml<=0){playFail();setTimeout(()=>setScreen("gameOver"),500);}return;}playMatch();setMatchedCells(matches);const pts=matches.length*10*(cc+1);const nrs=rs+pts;setTimeout(()=>{setScore(s=>s+pts);const b2=removeMatches(b,matches);const b3=dropCandies(b2);setBoard(b3);setMatchedCells([]);setTimeout(()=>processMatches(b3,cc+1,nrs,ml,ts,li),300);},400);},[]);
 const handleCellClick=(r,c)=>{if(animating||screen!=="game")return;if(!selected){setSelected([r,c]);return;}const[sr,sc]=selected;if(sr===r&&sc===c){setSelected(null);return;}if(isAdj(sr,sc,r,c)){const nb=board.map(row=>[...row]);[nb[sr][sc],nb[r][c]]=[nb[r][c],nb[sr][sc]];if(findMatches(nb).length>0){playSwap();setBoard(nb);setSelected(null);const nm=moves-1;setMoves(nm);setAnimating(true);processMatches(nb,0,score,nm,lv.targetScore,currentLevel);}else setSelected(null);}else setSelected([r,c]);};
 const handleHint=()=>{if(hintsLeft<=0||animating)return;const hint=findHint(board);if(!hint)return;setHintsLeft(h=>h-1);setHintCells(hint);setTimeout(()=>setHintCells(null),2000);};
