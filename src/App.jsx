@@ -517,7 +517,7 @@ export default function App(){
             {/* Level distribution bar */}
             <div style={{background:"rgba(255,255,255,0.05)",border:"1px solid rgba(255,255,255,0.08)",borderRadius:"14px",padding:"14px",marginBottom:"16px"}}>
               <div style={{color:"rgba(255,255,255,0.6)",fontSize:"0.78rem",marginBottom:"10px",fontWeight:700}}>📈 توزيع اللاعبين على المراحل</div>
-              {Array.from({length:20},(_,i)=>{
+              {Array.from({length: LEVELS.length},(_,i)=>{
                 const count=adminData.filter(p=>(p.unlockedLevels||1)===i+1).length;
                 const pct=totalPlayers?Math.round(count/totalPlayers*100):0;
                 return(
