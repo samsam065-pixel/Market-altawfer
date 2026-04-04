@@ -617,7 +617,7 @@ export default function App(){
                       <div style={{color:"rgba(255,255,255,0.35)",fontSize:"0.68rem"}}>أفضل: {(p.bestScore||0).toLocaleString()}</div>
                     </div>
                     <div style={{textAlign:"center",flexShrink:0}}>
-                      <div style={{color:rankColor,fontWeight:900,fontSize:"0.95rem"}}>M{Math.min(p.unlockedLevels||1,15)}</div>
+                      <div style={{color:rankColor,fontWeight:900,fontSize:"0.95rem"}}>M{Math.min(p.unlockedLevels||1,20)}</div>
                     </div>
                     <div style={{color:"#FFD700",fontSize:"0.82rem",flexShrink:0}}>🪙{p.coins||0}</div>
                   </div>
@@ -644,7 +644,7 @@ export default function App(){
           <div style={{width:"32px",height:"32px",borderRadius:"50%",background:"linear-gradient(135deg,#FF6B9D,#A855F7)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:"1rem",fontWeight:800,color:"#fff"}}>{loggedUser[0].toUpperCase()}</div>
           <div>
             <div style={{color:"#fff",fontWeight:700,fontSize:"0.88rem"}}>{loggedUser}</div>
-            <div style={{color:"rgba(255,255,255,0.35)",fontSize:"0.68rem"}}>{saveIndicator?"💾 تم الحفظ ✓ ":"☁️ Firebase"}M{Math.min(unlockedLevels,15)}/15</div>
+            <div style={{color:"rgba(255,255,255,0.35)",fontSize:"0.68rem"}}>{saveIndicator?"💾 تم الحفظ ✓ ":"☁️ Firebase"}M{Math.min(unlockedLevels,20)}/15</div>
           </div>
         </div>
         <button onClick={handleLogout} style={{background:"rgba(255,50,50,0.12)",border:"1px solid rgba(255,50,50,0.25)",borderRadius:"8px",padding:"5px 12px",color:"rgba(255,100,100,0.9)",fontSize:"0.78rem",cursor:"pointer"}}>خروج</button>
@@ -682,8 +682,15 @@ export default function App(){
       </p>
 
       {/* Level grid */}
-      <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:"10px",width:"100%",maxWidth:"400px"}}>
-        {LEVELS.map((l,idx)=>{
+    <div style={{
+  display: "grid",
+  gridTemplateColumns: "repeat(3, 1fr)",
+  gap: "15px",
+  maxHeight: "60vh",
+  overflowY: "auto",
+  padding: "10px"
+}}>
+    {LEVELS.map((l,idx)=>{
           const locked=idx>=unlockedLevels,done=idx<unlockedLevels-1;
           return(
             <div key={idx} className="lvbtn" onClick={()=>!locked&&startLevel(idx)} style={{background:locked?"rgba(255,255,255,0.04)":done?"linear-gradient(135deg,#10B981,#047857)":"linear-gradient(135deg,#FF6B9D,#A855F7)",border:locked?"1px solid rgba(255,255,255,0.07)":"1px solid rgba(255,255,255,0.2)",borderRadius:"14px",padding:"12px 6px",textAlign:"center",cursor:locked?"not-allowed":"pointer",opacity:locked?0.4:1,boxShadow:locked?"none":"0 4px 14px rgba(168,85,247,0.3)"}}>
