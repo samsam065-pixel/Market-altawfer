@@ -45,12 +45,27 @@ async function fsSaveProfile(username,data){
 async function fsGetLeaderboard(){
   try{
     const{db}=await getFB();
-    const{collection,getDocs,query,orderBy,limit}=db._fns;
-    const q=query(collection(db,"players"),orderBy("bestScore","desc"),orderBy("bestScore","desc"),limit(10));
-    const snap=await getDocs(q);7
-    return snap.docs.map(d=>({id:d.id,...d.data()}));
-  }catch(e){console.error("fsGetLeaderboard",e);return snap.docs.map(d => ({ id: d.id, ...d.data() }));
-
+    const{collection,getDocs}=db._fns;
+    const snap=await getDocs(collection(db,"players"));
+    if(snap.empty) return [];
+    const all=snap.docs.map(d=>{
+      const data=d.data();
+      return {
+        id:d.id,
+        username:data.username||d.id,
+        unlockedLevels:Number(data.unlockedLevels)||1,
+        bestScore:Number(data.bestScore)||0,
+        coins:Number(data.coins)||0,
+      };
+    });
+    return all.sort((a,b)=>
+      b.unlockedLevels-a.unlockedLevels||b.bestScore-a.bestScore
+    ).slice(0,10);
+  }catch(e){
+    console.error("fsGetLeaderboard error:",e);
+    return[];
+  }
+}
 
 // ======= Firebase Auth helpers =======
 async function fbRegister(username,password){
