@@ -372,8 +372,8 @@ export default function App(){
     if(explodedRows.length||explodedCols.length){
       playBomb();setExplodingRows(explodedRows);setExplodingCols(explodedCols);
       const cells=explodedRows.length*COLS+explodedCols.length*ROWS;
-      const nrs=rs+cells*15*(cc+1);
-      setTimeout(()=>{setScore(s=>s+cells*15*(cc+1));setExplodingRows([]);setExplodingCols([]);const b3=dropCandies(afterBombs);setBoard(b3);setTimeout(()=>processMatches(b3,cc+1,nrs,ml,ts,li),300);},550);
+      const nrs=rs+cells*20*(cc+1);
+      setTimeout(()=>{setScore(s=>s+cells*20*(cc+1));setExplodingRows([]);setExplodingCols([]);const b3=dropCandies(afterBombs);setBoard(b3);setTimeout(()=>processMatches(b3,cc+1,nrs,ml,ts,li),300);},550);
       return;
     }
     const{matches,bombPositions}=findMatchesAndBombs(b);
@@ -492,7 +492,7 @@ export default function App(){
       {/* Stats cards */}
       {adminLoading?<div style={{textAlign:"center",padding:"60px",color:"rgba(255,255,255,0.4)"}}>⏳ جاري التحميل...</div>:(()=>{
         const totalPlayers=adminData.length;
-        const completedAll=adminData.filter(p=>(p.unlockedLevels||1)>15).length;
+        const completedAll=adminData.filter(p=>(p.unlockedLevels||1)>20).length;
         const totalCoins=adminData.reduce((s,p)=>s+(p.coins||0),0);
         const avgLevel=totalPlayers?Math.round(adminData.reduce((s,p)=>s+(p.unlockedLevels||1),0)/totalPlayers):0;
 
@@ -517,7 +517,7 @@ export default function App(){
             {/* Level distribution bar */}
             <div style={{background:"rgba(255,255,255,0.05)",border:"1px solid rgba(255,255,255,0.08)",borderRadius:"14px",padding:"14px",marginBottom:"16px"}}>
               <div style={{color:"rgba(255,255,255,0.6)",fontSize:"0.78rem",marginBottom:"10px",fontWeight:700}}>📈 توزيع اللاعبين على المراحل</div>
-              {Array.from({length:15},(_,i)=>{
+              {Array.from({length:20},(_,i)=>{
                 const count=adminData.filter(p=>(p.unlockedLevels||1)===i+1).length;
                 const pct=totalPlayers?Math.round(count/totalPlayers*100):0;
                 return(
@@ -548,7 +548,7 @@ export default function App(){
                       <div style={{color:"rgba(255,255,255,0.25)",fontSize:"0.6rem"}}>{p.createdAt?new Date(p.createdAt).toLocaleDateString("ar"):"—"}</div>
                     </div>
                   </div>
-                  <div style={{textAlign:"center",color:"#A855F7",fontWeight:800,fontSize:"0.88rem"}}>M{Math.min(p.unlockedLevels||1,15)}</div>
+                  <div style={{textAlign:"center",color:"#A855F7",fontWeight:800,fontSize:"0.88rem"}}>M{Math.min(p.unlockedLevels||1,20)}</div>
                   <div style={{textAlign:"center",color:"#FFD700",fontSize:"0.82rem"}}>{(p.bestScore||0).toLocaleString()}</div>
                   <div style={{textAlign:"center",color:"#10B981",fontSize:"0.82rem"}}>🪙{p.coins||0}</div>
                 </div>
