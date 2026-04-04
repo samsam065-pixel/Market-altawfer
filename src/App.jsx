@@ -49,8 +49,8 @@ async function fsGetLeaderboard(){
     const q=query(collection(db,"players"),orderBy("bestScore","desc"),orderBy("bestScore","desc"),limit(10));
     const snap=await getDocs(q);7
     return snap.docs.map(d=>({id:d.id,...d.data()}));
-  }catch(e){console.error("fsGetLeaderboard",e);return[];}
-}
+  }catch(e){console.error("fsGetLeaderboard",e);return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+
 
 // ======= Firebase Auth helpers =======
 async function fbRegister(username,password){
