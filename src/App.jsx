@@ -644,7 +644,7 @@ export default function App(){
           <div style={{width:"32px",height:"32px",borderRadius:"50%",background:"linear-gradient(135deg,#FF6B9D,#A855F7)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:"1rem",fontWeight:800,color:"#fff"}}>{loggedUser[0].toUpperCase()}</div>
           <div>
             <div style={{color:"#fff",fontWeight:700,fontSize:"0.88rem"}}>{loggedUser}</div>
-            <div style={{color:"rgba(255,255,255,0.35)",fontSize:"0.68rem"}}>{saveIndicator?"💾 تم الحفظ ✓ ":"☁️ Firebase"}M{Math.min(unlockedLevels,20)}/15</div>
+            <div style={{color:"rgba(255,255,255,0.35)",fontSize:"0.68rem"}}>{saveIndicator?"💾 تم الحفظ ✓ ":"☁️ Firebase"}M{Math.min(unlockedLevels,20)}/LEVELS.length</div>
           </div>
         </div>
         <button onClick={handleLogout} style={{background:"rgba(255,50,50,0.12)",border:"1px solid rgba(255,50,50,0.25)",borderRadius:"8px",padding:"5px 12px",color:"rgba(255,100,100,0.9)",fontSize:"0.78rem",cursor:"pointer"}}>خروج</button>
@@ -759,7 +759,7 @@ export default function App(){
       <div style={{animation:"bounceIn 0.6s forwards",textAlign:"center",padding:"40px"}}>
         <div style={{fontSize:"5rem",marginBottom:"12px"}}>🏅</div>
         <h2 style={{color:"#FFD700",fontSize:"2.2rem",margin:"0 0 8px 0",fontWeight:900}}>سيد Altawfer! 🎊</h2>
-        <p style={{color:"rgba(255,255,255,0.8)",fontSize:"1.1rem",margin:"0 0 4px 0"}}>أكملت جميع المراحل الـ 15!</p>
+        <p style={{color:"rgba(255,255,255,0.8)",fontSize:"1.1rem",margin:"0 0 4px 0"}}>أكملت جميع المراحل الـ {LEVELS.length}!</p>
         <div style={{color:"#FFD700",fontWeight:700,marginBottom:"16px"}}>🪙 رصيدك: {coins}</div>
         <a href="https://forms.gle/oZPFpUAzmtm7Srvo8" target="_blank" rel="noreferrer" style={{display:"inline-block",marginBottom:"16px",background:"linear-gradient(135deg,#FFD700,#FF6B9D)",borderRadius:"14px",padding:"14px 36px",color:"#1a0533",fontSize:"1.1rem",fontWeight:800,textDecoration:"none"}}>🏆 سجّل اسمك كبطل!</a><br/>
         <button onClick={()=>setScreen("levelSelect")} style={{background:"rgba(255,255,255,0.1)",border:"1px solid rgba(255,255,255,0.2)",borderRadius:"14px",padding:"10px 28px",color:"rgba(255,255,255,0.8)",fontSize:"0.95rem",fontWeight:700,cursor:"pointer",marginTop:"8px"}}>🗺️ المراحل</button>
