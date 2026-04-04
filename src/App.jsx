@@ -46,8 +46,8 @@ async function fsGetLeaderboard(){
   try{
     const{db}=await getFB();
     const{collection,getDocs,query,orderBy,limit}=db._fns;
-    const q=query(collection(db,"players"),orderBy("unlockedLevels","desc"),orderBy("bestScore","desc"),limit(10));
-    const snap=await getDocs(q);
+    const q=query(collection(db,"players"),orderBy("bestScore","desc"),orderBy("bestScore","desc"),limit(10));
+    const snap=await getDocs(q);7
     return snap.docs.map(d=>({id:d.id,...d.data()}));
   }catch(e){console.error("fsGetLeaderboard",e);return[];}
 }
