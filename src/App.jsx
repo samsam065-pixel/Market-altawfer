@@ -778,7 +778,7 @@ export default function App(){
       </div>
 
       <div style={{background:"rgba(255,255,255,0.08)",border:"1px solid rgba(168,85,247,0.3)",borderRadius:"12px",padding:"5px 18px",marginBottom:"10px",color:"#A855F7",fontWeight:700,fontSize:"0.82rem"}}>
-        المرحلة {currentLevel+1}/15 — {lv.label}
+        المرحلة {currentLevel+1}/{LEVELS.length} — {lv.label}
       </div>
 
       <div style={{display:"flex",gap:"10px",marginBottom:"8px"}}>
