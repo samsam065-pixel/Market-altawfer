@@ -120,7 +120,12 @@ const LEVELS=[
   {level:12,targetScore:3300,moves:25,label:"تحدي التوفير 🔥"},
   {level:13,targetScore:3900,moves:25,label:"أسطورة السوق 🌠"},
   {level:14,targetScore:4600,moves:25,label:"الأستاذ الكبير 💎"},
-  {level:15,targetScore:5500,moves:25,label:"سيد Altawfer 🏅"},
+  {level:15,targetScore:5500,moves:25,label:"سيد Altawfer 🏅"}];
+  {level:16,targetScore:6000,moves:25,label:"محترف التسوق 🔱"},
+  {level:17,targetScore:7000,moves:25,label:"أمير السوق 👸"},
+  {level:18,targetScore:7500,moves:25,label:"عملاق الأسواق 🦁"},
+  {level:19,targetScore:8500,moves:25,label:"أسطورة التوفير 🌋"},
+  {level:20,targetScore:9500,moves:25,label:"إمبراطور Altawfer 🏯"},
 ];
 const MOVES_PURCHASE_COST=13,MOVES_PURCHASE_AMOUNT=5,COINS_PER_LEVEL=5,DAILY_REWARD=5;
 const ADMIN_USER="admin"; // اسم مستخدم المشرف
