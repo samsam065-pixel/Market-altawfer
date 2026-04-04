@@ -529,7 +529,8 @@ export default function App(){
                     <div style={{color:"rgba(255,255,255,0.5)",fontSize:"0.65rem",minWidth:"28px"}}>{count}</div>
                   </div>
                 );
-              })}
+              })
+
             </div>
 
             {/* Players table */}
@@ -686,10 +687,13 @@ export default function App(){
   display: "grid",
   gridTemplateColumns: "repeat(3, 1fr)",
   gap: "15px",
-  maxHeight: "60vh",
-  overflowY: "auto",
-  padding: "10px"
+  maxHeight: "400px",
+  overflowY: "scroll",
+  padding: "20px",
+  backgroundColor: "rgba(0,0,0,0.2)",
+  borderRadius: "15px"
 }}>
+
     {LEVELS.map((l,idx)=>{
           const locked=idx>=unlockedLevels,done=idx<unlockedLevels-1;
           return(
