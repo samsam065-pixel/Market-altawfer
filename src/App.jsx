@@ -695,8 +695,9 @@ if (screen === "levelSelect") {
           </div>
         )}
       </div>
-           <button 
-          onClick={() => { setUnlockedLevels(60); alert("تم فتح الـ 60 مرحلة!"); }} 
+           style={{ borderRadius: "10px", padding: "10px", background: "#A855F7", color: "#fff" }}
+
+    
           style={{ borderRadius: "10px", padding: "10px", background: "#A855F7", color: "#fff", border: "none", cursor: "pointer" }}
         >
           🔓 فتح جميع المراحل فوراً
