@@ -522,94 +522,46 @@ export default function App(){
     </div>
   );
 
-  // ==================== ADMIN DASHBOARD ====================
-  if(showAdmin&&loggedUser===ADMIN_USER)return(
-    <div style={{...BG,minHeight:"100vh",overflowY:"auto",padding:"0"}}>
+
+// ==================== ADMIN DASHBOARD (UPDATED) ====================
+if (showAdmin && loggedUser === ADMIN_USER) {
+  return (
+    <div style={{ minHeight: "100vh", background: "#1a0533", color: "#fff", padding: "20px", overflowY: "auto", position: "relative", zIndex: 9999 }}>
       <style>{CSS}</style>
-      {/* Header */}
-      <div style={{background:"rgba(0,0,0,0.4)",borderBottom:"1px solid rgba(168,85,247,0.3)",padding:"14px 20px",display:"flex",alignItems:"center",justifyContent:"space-between",position:"sticky",top:0,zIndex:10}}>
-        <div>
-          <h2 style={{margin:0,color:"#A855F7",fontWeight:900,fontSize:"1.1rem"}}>⚙️ لوحة تحكم Market Altawfer</h2>
-          <p style={{margin:0,color:"rgba(255,255,255,0.3)",fontSize:"0.7rem"}}>Firebase Firestore • {adminData.length} لاعب</p>
-        </div>
-        <button onClick={()=>setShowAdmin(false)} style={{background:"rgba(255,255,255,0.08)",border:"1px solid rgba(255,255,255,0.15)",borderRadius:"8px",padding:"6px 14px",color:"rgba(255,255,255,0.7)",fontSize:"0.82rem",cursor:"pointer"}}>← رجوع</button>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px", borderBottom: "1px solid rgba(255,255,255,0.1)", paddingBottom: "10px" }}>
+        <h2 style={{ margin: 0, color: "#A855F7" }}>لوحة التحكم 🛠️</h2>
+        <button onClick={() => setShowAdmin(false)} style={{ background: "#ff4b2b", color: "#fff", border: "none", borderRadius: "8px", padding: "8px 15px", cursor: "pointer", fontWeight: "bold" }}>إغلاق</button>
       </div>
 
-      {/* Stats cards */}
-      {adminLoading?<div style={{textAlign:"center",padding:"60px",color:"rgba(255,255,255,0.4)"}}>⏳ جاري التحميل...</div>:(()=>{
-        const totalPlayers=adminData.length;
-        const completedAll=adminData.filter(p=>(p.unlockedLevels||1)>20).length;
-        const totalCoins=adminData.reduce((s,p)=>s+(p.coins||0),0);
-        const avgLevel=totalPlayers?Math.round(adminData.reduce((s,p)=>s+(p.unlockedLevels||1),0)/totalPlayers):0;
+      <div style={{ display: "grid", gap: "15px", marginBottom: "25px" }}>
+        <div style={{ background: "rgba(255,255,255,0.05)", padding: "15px", borderRadius: "12px", border: "1px solid rgba(255,255,255,0.1)" }}>
+          <p style={{ margin: "0 0 5px 0", opacity: 0.7 }}>إجمالي المراحل المتاحة:</p>
+          <h3 style={{ margin: 0, fontSize: "1.5rem" }}>{LEVELS.length} مرحلة</h3>
+        </div>
+        
+        <div style={{ background: "rgba(255,255,255,0.05)", padding: "15px", borderRadius: "12px", border: "1px solid rgba(255,255,255,0.1)" }}>
+          <p style={{ margin: "0 0 5px 0", opacity: 0.7 }}>وضعك الحالي:</p>
+          <h3 style={{ margin: 0, fontSize: "1.5rem" }}>مفتوح لك {unlockedLevels} مرحلة</h3>
+        </div>
+      </div>
 
-        return(
-          <div style={{padding:"16px 20px"}}>
-            {/* Summary */}
-            <div style={{display:"grid",gridTemplateColumns:"repeat(2,1fr)",gap:"10px",marginBottom:"20px"}}>
-              {[
-                {label:"إجمالي اللاعبين",value:totalPlayers,icon:"👥",color:"#A855F7"},
-                {label:"أكملوا كل المراحل",value:completedAll,icon:"🏅",color:"#FFD700"},
-                {label:"متوسط المرحلة",value:`M${avgLevel}`,icon:"📊",color:"#60a5fa"},
-                {label:"إجمالي العملات",value:totalCoins.toLocaleString(),icon:"🪙",color:"#10B981"},
-              ].map(s=>(
-                <div key={s.label} style={{background:"rgba(255,255,255,0.05)",border:`1px solid ${s.color}33`,borderRadius:"14px",padding:"14px",textAlign:"center"}}>
-                  <div style={{fontSize:"1.6rem",marginBottom:"4px"}}>{s.icon}</div>
-                  <div style={{color:s.color,fontWeight:900,fontSize:"1.3rem"}}>{s.value}</div>
-                  <div style={{color:"rgba(255,255,255,0.4)",fontSize:"0.65rem",marginTop:"2px"}}>{s.label}</div>
-                </div>
-              ))}
-            </div>
-
-            {/* Level distribution bar */}
-            <div style={{background:"rgba(255,255,255,0.05)",border:"1px solid rgba(255,255,255,0.08)",borderRadius:"14px",padding:"14px",marginBottom:"16px"}}>
-              <div style={{color:"rgba(255,255,255,0.6)",fontSize:"0.78rem",marginBottom:"10px",fontWeight:700}}>📈 توزيع اللاعبين على المراحل</div>
-              {Array.from({length: LEVELS.length},(_,i)=>{
-                const count=adminData.filter(p=>(p.unlockedLevels||1)===i+1).length;
-                const pct=totalPlayers?Math.round(count/totalPlayers*100):0;
-                return(
-                  <div key={i} style={{display:"flex",alignItems:"center",gap:"8px",marginBottom:"5px"}}>
-                    <div style={{color:"rgba(255,255,255,0.4)",fontSize:"0.65rem",minWidth:"24px",textAlign:"right"}}>M{i+1}</div>
-                    <div style={{flex:1,height:"10px",background:"rgba(255,255,255,0.06)",borderRadius:"5px",overflow:"hidden"}}>
-                      <div style={{height:"100%",width:`${pct}%`,background:"linear-gradient(90deg,#FF6B9D,#A855F7)",borderRadius:"5px",transition:"width 0.4s"}}/>
-                    </div>
-                    <div style={{color:"rgba(255,255,255,0.5)",fontSize:"0.65rem",minWidth:"28px"}}>{count}</div>
-                  </div>
-                );
-              })
-
-            </div>
-
-            {/* Players table */}
-            <div style={{background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.08)",borderRadius:"14px",overflow:"hidden"}}>
-              <div style={{padding:"12px 16px",borderBottom:"1px solid rgba(255,255,255,0.06)",color:"rgba(255,255,255,0.5)",fontSize:"0.72rem",display:"grid",gridTemplateColumns:"2fr 1fr 1fr 1fr",gap:"8px",fontWeight:700}}>
-                <span>اللاعب</span><span style={{textAlign:"center"}}>المرحلة</span><span style={{textAlign:"center"}}>أفضل نقطة</span><span style={{textAlign:"center"}}>عملات</span>
-              </div>
-              {adminData.map((p,i)=>(
-                <div key={p.id} style={{padding:"10px 16px",borderBottom:"1px solid rgba(255,255,255,0.04)",display:"grid",gridTemplateColumns:"2fr 1fr 1fr 1fr",gap:"8px",alignItems:"center",background:i%2===0?"transparent":"rgba(255,255,255,0.02)"}}>
-                  <div style={{display:"flex",alignItems:"center",gap:"8px"}}>
-                    <div style={{width:"28px",height:"28px",borderRadius:"50%",background:"linear-gradient(135deg,#FF6B9D,#A855F7)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:"0.78rem",fontWeight:800,color:"#fff",flexShrink:0}}>
-                      {(p.username||p.id)[0].toUpperCase()}
-                    </div>
-                    <div>
-                      <div style={{color:"#fff",fontSize:"0.82rem",fontWeight:600}}>{p.username||p.id}</div>
-                      <div style={{color:"rgba(255,255,255,0.25)",fontSize:"0.6rem"}}>{p.createdAt?new Date(p.createdAt).toLocaleDateString("ar"):"—"}</div>
-                    </div>
-                  </div>
-                  <div style={{textAlign:"center",color:"#A855F7",fontWeight:800,fontSize:"0.88rem"}}>M{Math.min(p.unlockedLevels||1,20)}</div>
-                  <div style={{textAlign:"center",color:"#FFD700",fontSize:"0.82rem"}}>{(p.bestScore||0).toLocaleString()}</div>
-                  <div style={{textAlign:"center",color:"#10B981",fontSize:"0.82rem"}}>🪙{p.coins||0}</div>
-                </div>
-              ))}
-            </div>
-
-            <button onClick={openAdmin} style={{marginTop:"12px",width:"100%",background:"rgba(168,85,247,0.15)",border:"1px solid rgba(168,85,247,0.3)",borderRadius:"10px",padding:"10px",color:"#A855F7",fontSize:"0.85rem",cursor:"pointer",fontWeight:700}}>
-              🔄 تحديث البيانات
-            </button>
-          </div>
-        );
-      })()}
+      <div style={{ background: "rgba(168, 85, 247, 0.1)", padding: "20px", borderRadius: "15px", border: "1px dashed #A855F7", textAlign: "center" }}>
+        <h4 style={{ marginTop: 0 }}>أدوات سريعة</h4>
+        <button 
+          onClick={() => { setUnlockedLevels(LEVELS.length); alert("تم فتح جميع المراحل الـ 60 بنجاح!"); }} 
+          style={{ width: "100%", padding: "15px", background: "linear-gradient(135deg,#A855F7,#FF6B9D)", color: "#fff", border: "none", borderRadius: "10px", fontWeight: "bold", fontSize: "1rem", cursor: "pointer", boxShadow: "0 4px 15px rgba(168, 85, 247, 0.4)" }}
+        >
+          🔓 فتح جميع المراحل فوراً
+        </button>
+        <p style={{ fontSize: "0.75rem", color: "rgba(255,255,255,0.4)", marginTop: "10px" }}>
+          سيؤدي هذا لفك القفل عن كافة المراحل الموجودة في مصفوفة LEVELS
+        </p>
+      </div>
     </div>
   );
+}
+
+
 // ==================== LEVEL SELECT (FIXED) ====================
 if (screen === "levelSelect") {
   return (
