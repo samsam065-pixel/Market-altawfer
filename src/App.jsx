@@ -101,79 +101,24 @@ const ALL_TYPES=["🍚","🌾","🫙","🧴","🍦","🍌"];
 const BOMB="💣", VBOMB="🧨", BOMBS=[BOMB,VBOMB];
 const COLORS={"🍚":"#E8F5E9","🌾":"#D4A017","🫙":"#FFD700","🧴":"#00BCD4","🍦":"#FCE4EC","🍌":"#FFF176"};
 
-// 60 مرحلة - حسب الجدول المطلوب
-const LEVELS = [
-  {level:1, targetScore:500, moves:35, label:"بداية التوفير 🛒"},
-  {level:2, targetScore:800, moves:35, label:"أول الصفقات 🛍️"},
-  {level:3, targetScore:1200, moves:35, label:"جمع النقاط 📈"},
-  {level:4, targetScore:1700, moves:35, label:"متسوق ذكي 🧠"},
-  {level:5, targetScore:2000, moves:35, label:"خصم كبير 🏷️"},
-  {level:6, targetScore:2500, moves:35, label:"عرض الموسم 🎪"},
-  {level:7, targetScore:3000, moves:35, label:"صيد الصفقات 🎣"},
-  {level:8, targetScore:4000, moves:35, label:"خبير التسوق 👑"},
-  {level:9, targetScore:5000, moves:35, label:"بطل التوفير 🏆"},
-  {level:10, targetScore:6000, moves:35, label:"سيد السوق 🎖️"},
-  {level:11, targetScore:7000, moves:30, label:"عاصفة العروض ⚡"},
-  {level:12, targetScore:8000, moves:30, label:"تحدي الخصومات 🔥"},
-  {level:13, targetScore:9000, moves:30, label:"صاروخ التسوق 🚀"},
-  {level:14, targetScore:10000, moves:30, label:"ملك العروض 👑"},
-  {level:15, targetScore:11200, moves:30, label:"أسطورة السوق 🌟"},
-  {level:16, targetScore:12500, moves:30, label:"محترف الصفقات 💼"},
-  {level:17, targetScore:13000, moves:30, label:"قناص العروض 🎯"},
-  {level:18, targetScore:14700, moves:30, label:"ساحر الأسواق 🪄"},
-  {level:19, targetScore:16600, moves:30, label:"مدير التسوق 📊"},
-  {level:20, targetScore:17700, moves:30, label:"خبير التوفير 💎"},
-  {level:21, targetScore:19000, moves:30, label:"بوابة المول 🏬"},
-  {level:22, targetScore:20500, moves:30, label:"عروض المول 🎪"},
-  {level:23, targetScore:21200, moves:30, label:"متاجر الأزياء 👗"},
-  {level:24, targetScore:22100, moves:30, label:"مطاعم المول 🍽️"},
-  {level:25, targetScore:24200, moves:30, label:"سينما المول 🎬"},
-  {level:26, targetScore:25500, moves:30, label:"ألعاب المول 🎮"},
-  {level:27, targetScore:27000, moves:30, label:"مجوهرات المول 💍"},
-  {level:28, targetScore:28700, moves:30, label:"VIP المول 🌟"},
-  {level:29, targetScore:30600, moves:30, label:"بطل المول 🏆"},
-  {level:30, targetScore:32000, moves:30, label:"ملك المول 👑"},
-  {level:31, targetScore:34000, moves:30, label:"مستودع صغير 📦"},
-  {level:32, targetScore:36000, moves:30, label:"مستودع متوسط 🏭"},
-  {level:33, targetScore:38000, moves:30, label:"مستودع كبير 🏗️"},
-  {level:34, targetScore:40000, moves:30, label:"مدير المستودع 📋"},
-  {level:35, targetScore:41200, moves:30, label:"خبير التخزين 🔧"},
-  {level:36, targetScore:43500, moves:30, label:"أمين المخزن ⚙️"},
-  {level:37, targetScore:46000, moves:30, label:"قائد الشحن 🚛"},
-  {level:38, targetScore:48700, moves:30, label:"محترف اللوجستيك 🗺️"},
-  {level:39, targetScore:50000, moves:30, label:"عملاق التوزيع 💪"},
-  {level:40, targetScore:52700, moves:30, label:"سيد المستودع 🏅"},
-  {level:41, targetScore:55000, moves:25, label:"سوق الذهب الصغير 💛"},
-  {level:42, targetScore:57500, moves:25, label:"تاجر الذهب 🥇"},
-  {level:43, targetScore:59200, moves:25, label:"صائد الكنوز 💎"},
-  {level:44, targetScore:62100, moves:25, label:"ملك الذهب 👸"},
-  {level:45, targetScore:68000, moves:25, label:"أمير الثروة 🤴"},
-  {level:46, targetScore:68500, moves:25, label:"حارس الخزينة 🔐"},
-  {level:47, targetScore:71000, moves:25, label:"سيد الثروة 💰"},
-  {level:48, targetScore:73700, moves:25, label:"إمبراطور الذهب ⚜️"},
-  {level:49, targetScore:76600, moves:25, label:"أسطورة الثروة 🌠"},
-  {level:50, targetScore:77700, moves:25, label:"قمة الذهب 🏔️"},
-  {level:51, targetScore:80000, moves:25, label:"بوابة الإمبراطورية 🏯"},
-  {level:52, targetScore:84500, moves:25, label:"قاعة العرش 🎖️"},
-  {level:53, targetScore:88200, moves:25, label:"حارس التاج 🛡️"},
-  {level:54, targetScore:92000, moves:25, label:"وزير التوفير 📜"},
-  {level:55, targetScore:95200, moves:25, label:"قائد الجيش 🎯"},
-  {level:56, targetScore:100000, moves:25, label:"أمير الإمبراطورية 👑"},
-  {level:57, targetScore:110000, moves:25, label:"حاكم المدينة 🌆"},
-  {level:58, targetScore:113700, moves:25, label:"سلطان التوفير 🕌"},
-  {level:59, targetScore:119600, moves:25, label:"الإمبراطور الأكبر 🌍"},
-  {level:60, targetScore:155500, moves:25, label:"سيد Altawfer الأعظم 🏆"},
-];
+// 60 مرحلة
+const LEVELS = Array.from({length: 60}, (_, i) => ({
+  level: i+1,
+  targetScore: 200 + Math.floor(i / 10) * 100 + (i % 10) * 50,
+  moves: i < 10 ? 35 : i < 20 ? 30 : i < 30 ? 25 : i < 40 ? 22 : i < 50 ? 20 : 18,
+  label: `مرحلة ${i+1}`
+}));
 
-const MOVES_PURCHASE_COST=13, MOVES_PURCHASE_AMOUNT=5, COINS_PER_LEVEL=5, DAILY_REWARD=5;
-const ADMIN_USER="admin";
-
+// 4 عوالم (كل عالم 15 مرحلة)
 const WORLDS = [
   { id: 0, name: "🛒 سوق البداية", icon: "🛒", color: "linear-gradient(135deg,#FF6B9D,#A855F7)", startLevel: 0, endLevel: 14 },
   { id: 1, name: "🏬 مول التوفير", icon: "🏬", color: "linear-gradient(135deg,#3B82F6,#06B6D4)", startLevel: 15, endLevel: 29 },
   { id: 2, name: "📦 مستودع الخير", icon: "📦", color: "linear-gradient(135deg,#10B981,#047857)", startLevel: 30, endLevel: 44 },
   { id: 3, name: "💰 سوق الذهب", icon: "💰", color: "linear-gradient(135deg,#F59E0B,#D97706)", startLevel: 45, endLevel: 59 }
 ];
+
+const MOVES_PURCHASE_COST=13, MOVES_PURCHASE_AMOUNT=5, COINS_PER_LEVEL=5, DAILY_REWARD=5;
+const ADMIN_USER="admin";
 
 function canClaimDaily(lastDailyDate){
   if(!lastDailyDate)return true;
@@ -468,7 +413,117 @@ export default function App(){
 
   const Spinner=()=><span className="spinner">⏳</span>;
 
-  // Level Select Screen
+  // ==================== AUTH ====================
+  if(!loggedUser)return(
+    <div style={{...BG,display:"flex",alignItems:"center",justifyContent:"center",padding:"24px"}}>
+      <style>{CSS}</style>
+      <div className="fade-in" style={{width:"100%",maxWidth:"340px"}}>
+        <h1 style={{fontSize:"2rem",fontWeight:900,background:"linear-gradient(90deg,#FF6B9D,#A855F7,#60a5fa)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent",margin:"0 0 4px 0",textAlign:"center"}}>🛒 Market Altawfer</h1>
+        <p style={{color:"rgba(255,255,255,0.35)",fontSize:"0.75rem",textAlign:"center",margin:"0 0 24px 0"}}>☁️ مدعوم بـ Firebase</p>
+        <div style={{display:"flex",background:"rgba(255,255,255,0.06)",borderRadius:"12px",padding:"4px",marginBottom:"20px"}}>
+          {["login","register"].map(s=>(
+            <button key={s} onClick={()=>{setAuthScreen(s);setAuthError("");}} style={{flex:1,background:authScreen===s?"linear-gradient(135deg,#FF6B9D,#A855F7)":"transparent",border:"none",borderRadius:"9px",padding:"9px",color:authScreen===s?"#fff":"rgba(255,255,255,0.5)",fontSize:"0.9rem",fontWeight:authScreen===s?800:400,cursor:"pointer",transition:"all 0.2s"}}>
+              {s==="login"?"تسجيل الدخول":"حساب جديد"}
+            </button>
+          ))}
+        </div>
+        <div className={authShake?"shake":""}>
+          <input style={inputStyle} placeholder="اسم المستخدم" value={username} onChange={e=>{setUsername(e.target.value);setAuthError("");}} onKeyDown={e=>e.key==="Enter"&&(authScreen==="login"?handleLogin():handleRegister())}/>
+          <input style={inputStyle} placeholder="كلمة المرور" type="password" value={password} onChange={e=>{setPassword(e.target.value);setAuthError("");}} onKeyDown={e=>e.key==="Enter"&&(authScreen==="login"?handleLogin():handleRegister())}/>
+          {authError&&<div style={{color:"#FF6B6B",fontSize:"0.82rem",marginBottom:"12px",textAlign:"center",background:"rgba(255,50,50,0.1)",border:"1px solid rgba(255,50,50,0.25)",borderRadius:"8px",padding:"8px"}}>⚠️ {authError}</div>}
+          <button style={btnPrimary} onClick={authScreen==="login"?handleLogin:handleRegister} disabled={authLoading}>
+            {authLoading?<Spinner/>:authScreen==="login"?"🚀 دخول":"✅ إنشاء الحساب"}
+          </button>
+        </div>
+        <p style={{color:"rgba(255,255,255,0.2)",fontSize:"0.7rem",textAlign:"center",marginTop:"12px"}}>☁️ بياناتك محفوظة على السحابة • تسجّل من أي جهاز</p>
+      </div>
+    </div>
+  );
+
+  // ==================== ADMIN DASHBOARD ====================
+  if(showAdmin&&loggedUser===ADMIN_USER)return(
+    <div style={{...BG,minHeight:"100vh",overflowY:"auto",padding:"0"}}>
+      <style>{CSS}</style>
+      <div style={{background:"rgba(0,0,0,0.4)",borderBottom:"1px solid rgba(168,85,247,0.3)",padding:"14px 20px",display:"flex",alignItems:"center",justifyContent:"space-between",position:"sticky",top:0,zIndex:10}}>
+        <div>
+          <h2 style={{margin:0,color:"#A855F7",fontWeight:900,fontSize:"1.1rem"}}>⚙️ لوحة تحكم Market Altawfer</h2>
+          <p style={{margin:0,color:"rgba(255,255,255,0.3)",fontSize:"0.7rem"}}>Firebase Firestore • {adminData.length} لاعب</p>
+        </div>
+        <button onClick={()=>setShowAdmin(false)} style={{background:"rgba(255,255,255,0.08)",border:"1px solid rgba(255,255,255,0.15)",borderRadius:"8px",padding:"6px 14px",color:"rgba(255,255,255,0.7)",fontSize:"0.82rem",cursor:"pointer"}}>← رجوع</button>
+      </div>
+
+      {adminLoading?<div style={{textAlign:"center",padding:"60px",color:"rgba(255,255,255,0.4)"}}>⏳ جاري التحميل...</div>:(()=>{
+        const totalPlayers=adminData.length;
+        const completedAll=adminData.filter(p=>(p.unlockedLevels||1)>20).length;
+        const totalCoins=adminData.reduce((s,p)=>s+(p.coins||0),0);
+        const avgLevel=totalPlayers?Math.round(adminData.reduce((s,p)=>s+(p.unlockedLevels||1),0)/totalPlayers):0;
+
+        return(
+          <div style={{padding:"16px 20px"}}>
+            <div style={{display:"grid",gridTemplateColumns:"repeat(2,1fr)",gap:"10px",marginBottom:"20px"}}>
+              {[
+                {label:"إجمالي اللاعبين",value:totalPlayers,icon:"👥",color:"#A855F7"},
+                {label:"أكملوا كل المراحل",value:completedAll,icon:"🏅",color:"#FFD700"},
+                {label:"متوسط المرحلة",value:`M${avgLevel}`,icon:"📊",color:"#60a5fa"},
+                {label:"إجمالي العملات",value:totalCoins.toLocaleString(),icon:"🪙",color:"#10B981"},
+              ].map(s=>(
+                <div key={s.label} style={{background:"rgba(255,255,255,0.05)",border:`1px solid ${s.color}33`,borderRadius:"14px",padding:"14px",textAlign:"center"}}>
+                  <div style={{fontSize:"1.6rem",marginBottom:"4px"}}>{s.icon}</div>
+                  <div style={{color:s.color,fontWeight:900,fontSize:"1.3rem"}}>{s.value}</div>
+                  <div style={{color:"rgba(255,255,255,0.4)",fontSize:"0.65rem",marginTop:"2px"}}>{s.label}</div>
+                </div>
+              ))}
+            </div>
+
+            <div style={{background:"rgba(255,255,255,0.05)",border:"1px solid rgba(255,255,255,0.08)",borderRadius:"14px",padding:"14px",marginBottom:"16px"}}>
+              <div style={{color:"rgba(255,255,255,0.6)",fontSize:"0.78rem",marginBottom:"10px",fontWeight:700}}>📈 توزيع اللاعبين على المراحل</div>
+              {Array.from({length: Math.min(LEVELS.length, 60)},(_,i)=>{
+                const count=adminData.filter(p=>(p.unlockedLevels||1)===i+1).length;
+                const pct=totalPlayers?Math.round(count/totalPlayers*100):0;
+                return(
+                  <div key={i} style={{display:"flex",alignItems:"center",gap:"8px",marginBottom:"5px"}}>
+                    <div style={{color:"rgba(255,255,255,0.4)",fontSize:"0.65rem",minWidth:"24px",textAlign:"right"}}>M{i+1}</div>
+                    <div style={{flex:1,height:"10px",background:"rgba(255,255,255,0.06)",borderRadius:"5px",overflow:"hidden"}}>
+                      <div style={{height:"100%",width:`${pct}%`,background:"linear-gradient(90deg,#FF6B9D,#A855F7)",borderRadius:"5px",transition:"width 0.4s"}}/>
+                    </div>
+                    <div style={{color:"rgba(255,255,255,0.5)",fontSize:"0.65rem",minWidth:"28px"}}>{count}</div>
+                  </div>
+                );
+              })}
+            </div>
+
+            <div style={{background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.08)",borderRadius:"14px",overflow:"hidden"}}>
+              <div style={{padding:"12px 16px",borderBottom:"1px solid rgba(255,255,255,0.06)",color:"rgba(255,255,255,0.5)",fontSize:"0.72rem",display:"grid",gridTemplateColumns:"2fr 1fr 1fr 1fr",gap:"8px",fontWeight:700}}>
+                <span>اللاعب</span><span style={{textAlign:"center"}}>المرحلة</span><span style={{textAlign:"center"}}>أفضل نقطة</span><span style={{textAlign:"center"}}>عملات</span>
+              </div>
+              {adminData.map((p,i)=>(
+                <div key={p.id} style={{padding:"10px 16px",borderBottom:"1px solid rgba(255,255,255,0.04)",display:"grid",gridTemplateColumns:"2fr 1fr 1fr 1fr",gap:"8px",alignItems:"center",background:i%2===0?"transparent":"rgba(255,255,255,0.02)"}}>
+                  <div style={{display:"flex",alignItems:"center",gap:"8px"}}>
+                    <div style={{width:"28px",height:"28px",borderRadius:"50%",background:"linear-gradient(135deg,#FF6B9D,#A855F7)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:"0.78rem",fontWeight:800,color:"#fff",flexShrink:0}}>
+                      {(p.username||p.id)[0].toUpperCase()}
+                    </div>
+                    <div>
+                      <div style={{color:"#fff",fontSize:"0.82rem",fontWeight:600}}>{p.username||p.id}</div>
+                      <div style={{color:"rgba(255,255,255,0.25)",fontSize:"0.6rem"}}>{p.createdAt?new Date(p.createdAt).toLocaleDateString("ar"):"—"}</div>
+                    </div>
+                  </div>
+                  <div style={{textAlign:"center",color:"#A855F7",fontWeight:800,fontSize:"0.88rem"}}>M{Math.min(p.unlockedLevels||1,20)}</div>
+                  <div style={{textAlign:"center",color:"#FFD700",fontSize:"0.82rem"}}>{(p.bestScore||0).toLocaleString()}</div>
+                  <div style={{textAlign:"center",color:"#10B981",fontSize:"0.82rem"}}>🪙{p.coins||0}</div>
+                </div>
+              ))}
+            </div>
+
+            <button onClick={openAdmin} style={{marginTop:"12px",width:"100%",background:"rgba(168,85,247,0.15)",border:"1px solid rgba(168,85,247,0.3)",borderRadius:"10px",padding:"10px",color:"#A855F7",fontSize:"0.85rem",cursor:"pointer",fontWeight:700}}>
+              🔄 تحديث البيانات
+            </button>
+          </div>
+        );
+      })()}
+    </div>
+  );
+
+  // ==================== LEVEL SELECT (with Worlds as Tabs) ====================
   if(screen === "levelSelect") {
     const currentWorld = WORLDS[selectedWorld];
     const worldLevels = LEVELS.slice(currentWorld.startLevel, currentWorld.endLevel + 1);
@@ -478,6 +533,7 @@ export default function App(){
       <div style={{minHeight:"100vh",background:"linear-gradient(135deg,#1a0533 0%,#2d0a5e 50%,#1a0533 100%)",fontFamily:"'Segoe UI',sans-serif",display:"flex",flexDirection:"column",alignItems:"center",padding:"20px",overflowY:"auto"}}>
         <style>{CSS}</style>
 
+        {/* Daily popup */}
         {showDailyPopup && (
           <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.75)",zIndex:300,display:"flex",alignItems:"center",justifyContent:"center",padding:"24px"}}>
             <div className="daily-popup" style={{background:"linear-gradient(135deg,#2d0a5e,#1a0533)",border:"2px solid rgba(255,215,0,0.5)",borderRadius:"24px",padding:"36px 28px",maxWidth:"320px",width:"100%",textAlign:"center"}}>
@@ -495,6 +551,7 @@ export default function App(){
 
         {dailyCollected && <div style={{position:"fixed",top:"16px",left:"50%",transform:"translateX(-50%)",zIndex:400,background:"linear-gradient(135deg,#FFD700,#FF9800)",borderRadius:"12px",padding:"10px 22px",color:"#1a0533",fontWeight:900,fontSize:"1rem",animation:"bounceIn 0.4s forwards",whiteSpace:"nowrap"}}>🎁 +{DAILY_REWARD}🪙 تم الاستلام!</div>}
 
+        {/* Leaderboard overlay */}
         {showLeaderboard && (
           <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.75)",zIndex:300,display:"flex",alignItems:"flex-end",justifyContent:"center"}}>
             <div className="lb-panel" style={{background:"linear-gradient(180deg,#2d0a5e,#1a0533)",border:"1px solid rgba(168,85,247,0.4)",borderRadius:"24px 24px 0 0",padding:"0 0 32px",width:"100%",maxWidth:"480px",maxHeight:"80vh",display:"flex",flexDirection:"column"}}>
@@ -534,6 +591,7 @@ export default function App(){
           </div>
         )}
 
+        {/* Header */}
         <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",width:"100%",maxWidth:"400px",marginBottom:"10px"}}>
           <h1 style={{fontSize:"1.5rem",fontWeight:900,background:"linear-gradient(90deg,#FF6B9D,#A855F7,#60a5fa)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent",margin:0}}>🛒 Market Altawfer</h1>
           <div style={{display:"flex",gap:"6px",alignItems:"center"}}>
@@ -543,6 +601,7 @@ export default function App(){
           </div>
         </div>
 
+        {/* User bar */}
         <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",width:"100%",maxWidth:"400px",background:"rgba(255,255,255,0.06)",border:"1px solid rgba(255,255,255,0.12)",borderRadius:"12px",padding:"8px 14px",marginBottom:"12px"}}>
           <div style={{display:"flex",alignItems:"center",gap:"8px"}}>
             <div style={{width:"32px",height:"32px",borderRadius:"50%",background:"linear-gradient(135deg,#FF6B9D,#A855F7)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:"1rem",fontWeight:800,color:"#fff"}}>{loggedUser[0].toUpperCase()}</div>
@@ -554,6 +613,7 @@ export default function App(){
           <button onClick={handleLogout} style={{background:"rgba(255,50,50,0.12)",border:"1px solid rgba(255,50,50,0.25)",borderRadius:"8px",padding:"5px 12px",color:"rgba(255,100,100,0.9)",fontSize:"0.78rem",cursor:"pointer"}}>خروج</button>
         </div>
 
+        {/* Daily card */}
         <div style={{width:"100%",maxWidth:"400px",marginBottom:"12px"}}>
           {dailyAvailable ? (
             <button onClick={()=>setShowDailyPopup(true)} className="daily-glow" style={{width:"100%",background:"linear-gradient(135deg,rgba(255,215,0,0.15),rgba(255,150,0,0.1))",border:"2px solid rgba(255,215,0,0.5)",borderRadius:"14px",padding:"11px 16px",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"space-between",boxSizing:"border-box"}}>
@@ -584,6 +644,7 @@ export default function App(){
           💣 4 متتالية أفقياً = قنبلة تدمر الصف • 🧨 4 متتالية عمودياً = قنبلة تدمر العمود
         </p>
 
+        {/* World Tabs - 4 عوالم */}
         <div style={{display:"flex",flexWrap:"wrap",justifyContent:"center",gap:"8px",marginBottom:"20px",maxWidth:"400px"}}>
           {WORLDS.map((world, idx) => {
             const worldLevelsCount = world.endLevel - world.startLevel + 1;
@@ -616,6 +677,7 @@ export default function App(){
           })}
         </div>
 
+        {/* Current World Info */}
         <div style={{background:currentWorld.color, borderRadius:"16px", padding:"12px 20px", marginBottom:"16px", textAlign:"center", width:"100%", maxWidth:"400px"}}>
           <div style={{fontSize:"2rem"}}>{currentWorld.icon}</div>
           <div style={{color:"#fff", fontWeight:900, fontSize:"1.1rem"}}>{currentWorld.name}</div>
@@ -627,6 +689,7 @@ export default function App(){
           </div>
         </div>
 
+        {/* Level Grid - 15 مرحلة لكل عالم */}
         <div style={{
           display: "grid",
           gridTemplateColumns: "repeat(3, 1fr)",
@@ -664,6 +727,7 @@ export default function App(){
     );
   }
 
+  // ==================== GAME OVER ====================
   if(screen==="gameOver")return(
     <div style={{...BG,display:"flex",alignItems:"center",justifyContent:"center"}}>
       <style>{CSS}</style>
@@ -689,6 +753,7 @@ export default function App(){
     </div>
   );
 
+  // ==================== LEVEL UP ====================
   if(screen==="levelUp")return(
     <div style={{...BG,display:"flex",alignItems:"center",justifyContent:"center"}}>
       <style>{CSS}</style>
@@ -709,6 +774,7 @@ export default function App(){
     </div>
   );
 
+  // ==================== WIN ====================
   if(screen==="win")return(
     <div style={{...BG,display:"flex",alignItems:"center",justifyContent:"center"}}>
       <style>{CSS}</style>
@@ -723,6 +789,7 @@ export default function App(){
     </div>
   );
 
+  // ==================== GAME ====================
   return(
     <div style={{minHeight:"100vh",background:"linear-gradient(135deg,#1a0533 0%,#2d0a5e 50%,#1a0533 100%)",fontFamily:"'Segoe UI',sans-serif",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:"16px",position:"relative",overflow:"hidden"}}>
       <style>{CSS}</style>
