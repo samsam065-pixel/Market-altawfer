@@ -695,8 +695,16 @@ if (screen === "levelSelect") {
           </div>
         )}
       </div>
+           <button 
+          onClick={() => { setUnlockedLevels(60); alert("تم فتح الـ 60 مرحلة!"); }} 
+          style={{ borderRadius: "10px", padding: "10px", background: "#A855F7", color: "#fff", border: "none", cursor: "pointer" }}
+        >
+          🔓 فتح جميع المراحل فوراً
+        </button>
+      </div> // إغلاق الـ div
+    ); // إغلاق الـ return
+  } // إغلاق الـ if
 
-backgroundColor: "rgba(0,100,0,0.18)", borderRadius: "10px", padding: "4px"
 
         💣 4 أفقي = يدمر الصف • 🧨 4 عمودي = يدمر العمود
       </p>
