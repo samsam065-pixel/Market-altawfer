@@ -522,45 +522,30 @@ export default function App(){
     </div>
   );
 
-
-// ==================== ADMIN DASHBOARD (UPDATED) ====================
-if (showAdmin && loggedUser === ADMIN_USER) {
-  return (
-    <div style={{ minHeight: "100vh", background: "#1a0533", color: "#fff", padding: "20px", overflowY: "auto", position: "relative", zIndex: 9999 }}>
-      <style>{CSS}</style>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px", borderBottom: "1px solid rgba(255,255,255,0.1)", paddingBottom: "10px" }}>
-        <h2 style={{ margin: 0, color: "#A855F7" }}>لوحة التحكم 🛠️</h2>
-        <button onClick={() => setShowAdmin(false)} style={{ background: "#ff4b2b", color: "#fff", border: "none", borderRadius: "8px", padding: "8px 15px", cursor: "pointer", fontWeight: "bold" }}>إغلاق</button>
-      </div>
-
-      <div style={{ display: "grid", gap: "15px", marginBottom: "25px" }}>
-        <div style={{ background: "rgba(255,255,255,0.05)", padding: "15px", borderRadius: "12px", border: "1px solid rgba(255,255,255,0.1)" }}>
-          <p style={{ margin: "0 0 5px 0", opacity: 0.7 }}>إجمالي المراحل المتاحة:</p>
-          <h3 style={{ margin: 0, fontSize: "1.5rem" }}>{LEVELS.length} مرحلة</h3>
+  // ==================== ADMIN DASHBOARD ====================
+  if (showAdmin && loggedUser === ADMIN_USER) {
+    return (
+      <div style={{ minHeight: "100vh", background: "#1a0533", color: "#fff", padding: "20px", overflowY: "auto" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "30px" }}>
+          <h2>لوحة التحكم 🛠️</h2>
+          <button onClick={() => setShowAdmin(false)} style={{ background: "#ff4b2b", color: "#fff", border: "none", borderRadius: "8px", padding: "10px 20px", cursor: "pointer" }}>إغلاق</button>
         </div>
-        
-        <div style={{ background: "rgba(255,255,255,0.05)", padding: "15px", borderRadius: "12px", border: "1px solid rgba(255,255,255,0.1)" }}>
-          <p style={{ margin: "0 0 5px 0", opacity: 0.7 }}>وضعك الحالي:</p>
-          <h3 style={{ margin: 0, fontSize: "1.5rem" }}>مفتوح لك {unlockedLevels} مرحلة</h3>
+
+        <div style={{ background: "rgba(255,255,255,0.05)", padding: "20px", borderRadius: "15px", textAlign: "center", border: "1px solid #A855F7" }}>
+          <h3 style={{ color: "#A855F7" }}>تحديث حالة المراحل</h3>
+          <p>عدد المراحل المكتشفة: <b>{LEVELS.length}</b></p>
+          
+          <button 
+            onClick={() => { setUnlockedLevels(LEVELS.length); alert("تم فتح الـ 60 مرحلة!"); }} 
+            style={{ width: "100%", padding: "20px", background: "linear-gradient(135deg,#A855F7,#FF6B9D)", color: "#fff", border: "none", borderRadius: "12px", fontWeight: "bold", fontSize: "1.2rem", cursor: "pointer", marginTop: "20px" }}
+          >
+            🔓 فتح جميع المراحل الـ 60 فوراً
+          </button>
         </div>
       </div>
-
-      <div style={{ background: "rgba(168, 85, 247, 0.1)", padding: "20px", borderRadius: "15px", border: "1px dashed #A855F7", textAlign: "center" }}>
-        <h4 style={{ marginTop: 0 }}>أدوات سريعة</h4>
-        <button 
-          onClick={() => { setUnlockedLevels(LEVELS.length); alert("تم فتح جميع المراحل الـ 60 بنجاح!"); }} 
-          style={{ width: "100%", padding: "15px", background: "linear-gradient(135deg,#A855F7,#FF6B9D)", color: "#fff", border: "none", borderRadius: "10px", fontWeight: "bold", fontSize: "1rem", cursor: "pointer", boxShadow: "0 4px 15px rgba(168, 85, 247, 0.4)" }}
-        >
-          🔓 فتح جميع المراحل فوراً
-        </button>
-        <p style={{ fontSize: "0.75rem", color: "rgba(255,255,255,0.4)", marginTop: "10px" }}>
-          سيؤدي هذا لفك القفل عن كافة المراحل الموجودة في مصفوفة LEVELS
-        </p>
-      </div>
-    </div>
-  );
-}
-
+    );
+  }
+  // ==================== END ADMIN ====================
 
 // ==================== LEVEL SELECT (FIXED) ====================
 if (screen === "levelSelect") {
