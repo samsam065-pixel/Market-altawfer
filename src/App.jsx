@@ -433,7 +433,7 @@ export default function App(){
           const updates={unlockedLevels:newUnlocked,coins:nc};
           if(rs>(prof.bestScore||0))updates.bestScore=rs;
           await saveToCloud(updates);
-          if(next>=20)setScreen("win");
+          if(next>=60)setScreen("win");
           else setScreen("levelUp");
         },600);
       }else if(ml<=0){playFail();setTimeout(()=>setScreen("gameOver"),500);}
