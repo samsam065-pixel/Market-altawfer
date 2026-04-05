@@ -696,7 +696,7 @@ if (screen === "levelSelect") {
         )}
       </div>
 
-     borderRadius: "10px", padding: "10px", background: "#A855F7"
+backgroundColor: "rgba(0,100,0,0.18)", borderRadius: "10px", padding: "4px"
 
         💣 4 أفقي = يدمر الصف • 🧨 4 عمودي = يدمر العمود
       </p>
