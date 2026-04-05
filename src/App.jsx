@@ -1,6 +1,5 @@
 import { useState, useCallback, useEffect } from "react";
 
-// ======= Firebase SDK (loaded via CDN globals) =======
 const FB_CONFIG = {
   apiKey: "AIzaSyC1XsjEakrMPBYru8j8zM2Y1rUbHrRPh8A",
   authDomain: "market-altawfer.firebaseapp.com",
@@ -10,7 +9,6 @@ const FB_CONFIG = {
   appId: "1:956981319308:web:e0d16a4c1427834a830da9",
 };
 
-// Lazy init Firebase
 let _app=null, _db=null, _auth=null;
 async function getFB(){
   if(_db) return {db:_db,auth:_auth};
@@ -25,22 +23,23 @@ async function getFB(){
   return {db:_db,auth:_auth};
 }
 
-// ======= Firestore helpers =======
 async function fsGetProfile(username){
   try{
     const{db}=await getFB();
     const{doc,getDoc}=db._fns;
     const snap=await getDoc(doc(db,"players",username));
     return snap.exists()?snap.data():null;
-  }catch(e){console.error("fsGetProfile",e);return null;}
+  }catch(e){console.error(e);return null;}
 }
+
 async function fsSaveProfile(username,data){
   try{
     const{db}=await getFB();
     const{doc,setDoc}=db._fns;
     await setDoc(doc(db,"players",username),data,{merge:true});
-  }catch(e){console.error("fsSaveProfile",e);}
+  }catch(e){console.error(e);}
 }
+
 async function fsGetLeaderboard(){
   try{
     const{db}=await getFB();
@@ -59,12 +58,11 @@ async function fsGetLeaderboard(){
     });
     return all.sort((a,b)=>b.unlockedLevels-a.unlockedLevels||b.bestScore-a.bestScore).slice(0,10);
   }catch(e){
-    console.error("fsGetLeaderboard error:",e);
+    console.error(e);
     return[];
   }
 }
 
-// ======= Firebase Auth helpers =======
 async function fbRegister(username,password){
   const email=`${username}@market-altawfer.game`;
   const{auth}=await getFB();
@@ -72,6 +70,7 @@ async function fbRegister(username,password){
   const cred=await createUserWithEmailAndPassword(auth,email,password);
   return cred.user;
 }
+
 async function fbLogin(username,password){
   const email=`${username}@market-altawfer.game`;
   const{auth}=await getFB();
@@ -79,13 +78,13 @@ async function fbLogin(username,password){
   const cred=await signInWithEmailAndPassword(auth,email,password);
   return cred.user;
 }
+
 async function fbLogout(){
   const{auth}=await getFB();
   const{signOut}=auth._fns;
   await signOut(auth);
 }
 
-// ======= Audio =======
 const AudioCtx = window.AudioContext || window.webkitAudioContext;
 let ctx = null;
 function getCtx(){if(!ctx)ctx=new AudioCtx();return ctx;}
@@ -97,83 +96,30 @@ function playCombo(){const c=getCtx(),notes=[784,988,1175,1568];notes.forEach((f
 function playCoin(){const c=getCtx(),o=c.createOscillator(),g=c.createGain();o.connect(g);g.connect(c.destination);o.type="sine";o.frequency.setValueAtTime(880,c.currentTime);o.frequency.exponentialRampToValueAtTime(1320,c.currentTime+0.08);g.gain.setValueAtTime(0.3,c.currentTime);g.gain.exponentialRampToValueAtTime(0.001,c.currentTime+0.2);o.start();o.stop(c.currentTime+0.2);}
 function playBomb(){const c=getCtx();const buf=c.createBuffer(1,c.sampleRate*0.5,c.sampleRate);const data=buf.getChannelData(0);for(let i=0;i<data.length;i++)data[i]=(Math.random()*2-1)*Math.exp(-i/(c.sampleRate*0.08));const src=c.createBufferSource();src.buffer=buf;const g=c.createGain();src.connect(g);g.connect(c.destination);g.gain.setValueAtTime(0.7,c.currentTime);g.gain.exponentialRampToValueAtTime(0.001,c.currentTime+0.5);src.start();src.stop(c.currentTime+0.5);}
 
-// ======= Constants =======
 const COLS=8,ROWS=8;
 const ALL_TYPES=["🍚","🌾","🫙","🧴","🍦","🍌"];
 const BOMB="💣", VBOMB="🧨", BOMBS=[BOMB,VBOMB];
 const COLORS={"🍚":"#E8F5E9","🌾":"#D4A017","🫙":"#FFD700","🧴":"#00BCD4","🍦":"#FCE4EC","🍌":"#FFF176"};
-const LEVELS=[
-  {level:1,targetScore:200,moves:35,label:"سوق البداية 🛒"},
-  {level:2,targetScore:350,moves:35,label:"المتسوق الجديد 🧺"},
-  {level:3,targetScore:500,moves:35,label:"عروض الأسبوع 🏷️"},
-  {level:4,targetScore:700,moves:35,label:"خصومات كبيرة 💰"},
-  {level:5,targetScore:900,moves:35,label:"مخزن التوفير 📦"},
-  {level:6,targetScore:1150,moves:30,label:"المتسوق الماهر 🎯"},
-  {level:7,targetScore:1400,moves:30,label:"صياد الصفقات 🦅"},
-  {level:8,targetScore:1700,moves:30,label:"ملك السوق 👑"},
-  {level:9,targetScore:2000,moves:30,label:"بطل التوفير 🏆"},
-  {level:10,targetScore:2400,moves:30,label:"خبير الأسواق 🌟"},
-  {level:11,targetScore:2800,moves:25,label:"عاصفة المنتجات ⚡"},
-  {level:12,targetScore:3300,moves:25,label:"تحدي التوفير 🔥"},
-  {level:13,targetScore:3900,moves:25,label:"أسطورة السوق 🌠"},
-  {level:14,targetScore:4600,moves:25,label:"الأستاذ الكبير 💎"},
-  {level:15,targetScore:5500,moves:25,label:"سيد Altawfer 🏅"},
-  {level:16,targetScore:6000,moves:25,label:"محترف التسوق 🔱"},
-  {level:17,targetScore:7000,moves:25,label:"أمير السوق 👸"},
-  {level:18,targetScore:7500,moves:25,label:"عملاق الأسواق 🦁"},
-  {level:19,targetScore:8500,moves:25,label:"أسطورة التوفير 🌋"},
-  {level:20,targetScore:9500,moves:25,label:"إمبراطور Altawfer 🏯"},
-  {level:21,targetScore:10000,moves:25,label:"بوابة المول 🏬"},
-  {level:22,targetScore:11000,moves:25,label:"عروض المول 🎪"},
-  {level:23,targetScore:12000,moves:25,label:"متاجر الأزياء 👗"},
-  {level:24,targetScore:13500,moves:25,label:"مطاعم المول 🍽️"},
-  {level:25,targetScore:15000,moves:25,label:"سينما المول 🎬"},
-  {level:26,targetScore:16500,moves:25,label:"ألعاب المول 🎮"},
-  {level:27,targetScore:18000,moves:25,label:"مجوهرات المول 💍"},
-  {level:28,targetScore:20000,moves:25,label:"VIP المول 🌟"},
-  {level:29,targetScore:22000,moves:25,label:"بطل المول 🏆"},
-  {level:30,targetScore:24000,moves:25,label:"ملك المول 👑"},
-  {level:31,targetScore:26000,moves:22,label:"مستودع صغير 📦"},
-  {level:32,targetScore:28000,moves:22,label:"مستودع متوسط 🏭"},
-  {level:33,targetScore:30000,moves:22,label:"مستودع كبير 🏗️"},
-  {level:34,targetScore:32500,moves:22,label:"مدير المستودع 📋"},
-  {level:35,targetScore:35000,moves:22,label:"خبير التخزين 🔧"},
-  {level:36,targetScore:37500,moves:22,label:"أمين المخزن ⚙️"},
-  {level:37,targetScore:40000,moves:22,label:"قائد الشحن 🚛"},
-  {level:38,targetScore:43000,moves:22,label:"محترف اللوجستيك 🗺️"},
-  {level:39,targetScore:46000,moves:22,label:"عملاق التوزيع 💪"},
-  {level:40,targetScore:50000,moves:22,label:"سيد المستودع 🏅"},
-  {level:41,targetScore:54000,moves:20,label:"سوق الذهب الصغير 💛"},
-  {level:42,targetScore:58000,moves:20,label:"تاجر الذهب 🥇"},
-  {level:43,targetScore:62000,moves:20,label:"صائد الكنوز 💎"},
-  {level:44,targetScore:66000,moves:20,label:"ملك الذهب 👸"},
-  {level:45,targetScore:70000,moves:20,label:"أمير الثروة 🤴"},
-  {level:46,targetScore:75000,moves:20,label:"حارس الخزينة 🔐"},
-  {level:47,targetScore:80000,moves:20,label:"سيد الثروة 💰"},
-  {level:48,targetScore:85000,moves:20,label:"إمبراطور الذهب ⚜️"},
-  {level:49,targetScore:90000,moves:20,label:"أسطورة الثروة 🌠"},
-  {level:50,targetScore:95000,moves:20,label:"قمة الذهب 🏔️"},
-  {level:51,targetScore:100000,moves:18,label:"بوابة الإمبراطورية 🏯"},
-  {level:52,targetScore:106000,moves:18,label:"قاعة العرش 🎖️"},
-  {level:53,targetScore:112000,moves:18,label:"حارس التاج 🛡️"},
-  {level:54,targetScore:118000,moves:18,label:"وزير التوفير 📜"},
-  {level:55,targetScore:125000,moves:18,label:"قائد الجيش 🎯"},
-  {level:56,targetScore:132000,moves:18,label:"أمير الإمبراطورية 👑"},
-  {level:57,targetScore:140000,moves:18,label:"حاكم المدينة 🌆"},
-  {level:58,targetScore:148000,moves:18,label:"سلطان التوفير 🕌"},
-  {level:59,targetScore:156000,moves:18,label:"الإمبراطور الأكبر 🌍"},
-  {level:60,targetScore:165000,moves:18,label:"سيد Altawfer الأعظم 🏆"},
+
+// 60 مرحلة
+const LEVELS = Array.from({length: 60}, (_, i) => ({
+  level: i+1,
+  targetScore: 200 + Math.floor(i / 10) * 100 + (i % 10) * 50,
+  moves: i < 10 ? 35 : i < 20 ? 30 : i < 30 ? 25 : i < 40 ? 22 : i < 50 ? 20 : 18,
+  label: `مرحلة ${i+1}`
+}));
+
+// 4 عوالم (كل عالم 15 مرحلة)
+const WORLDS = [
+  { id: 0, name: "🛒 سوق البداية", icon: "🛒", color: "linear-gradient(135deg,#FF6B9D,#A855F7)", startLevel: 0, endLevel: 14 },
+  { id: 1, name: "🏬 مول التوفير", icon: "🏬", color: "linear-gradient(135deg,#3B82F6,#06B6D4)", startLevel: 15, endLevel: 29 },
+  { id: 2, name: "📦 مستودع الخير", icon: "📦", color: "linear-gradient(135deg,#10B981,#047857)", startLevel: 30, endLevel: 44 },
+  { id: 3, name: "💰 سوق الذهب", icon: "💰", color: "linear-gradient(135deg,#F59E0B,#D97706)", startLevel: 45, endLevel: 59 }
 ];
-const MOVES_PURCHASE_COST=13,MOVES_PURCHASE_AMOUNT=5,COINS_PER_LEVEL=5,DAILY_REWARD=5;
-const WORLDS=[
-  {id:1,name:"سوق البداية",icon:"🛒",color:"linear-gradient(135deg,#FF6B9D,#A855F7)",from:0,to:14},
-  {id:2,name:"مول التوفير",icon:"🏬",color:"linear-gradient(135deg,#3B82F6,#06B6D4)",from:15,to:29},
-  {id:3,name:"مستودع الخير",icon:"📦",color:"linear-gradient(135deg,#10B981,#047857)",from:30,to:44},
-  {id:4,name:"سوق الذهب",icon:"💰",color:"linear-gradient(135deg,#F59E0B,#D97706)",from:45,to:59},
-];
+
+const MOVES_PURCHASE_COST=13, MOVES_PURCHASE_AMOUNT=5, COINS_PER_LEVEL=5, DAILY_REWARD=5;
 const ADMIN_USER="admin";
 
-// ======= Daily helpers =======
 function canClaimDaily(lastDailyDate){
   if(!lastDailyDate)return true;
   return new Date(lastDailyDate).toDateString()!==new Date().toDateString();
@@ -185,7 +131,6 @@ function timeUntilNextDaily(){
   return `${Math.floor(d/3600000)}س ${Math.floor((d%3600000)/60000)}د`;
 }
 
-// ======= Game logic =======
 function findMatchesAndBombs(b){
   const matchSet=new Set();const bombPositions=[];
   for(let r=0;r<ROWS;r++){let c=0;while(c<COLS){if(!b[r][c]||BOMBS.includes(b[r][c])){c++;continue;}let len=1;while(c+len<COLS&&b[r][c+len]===b[r][c])len++;if(len>=4){const mid=c+Math.floor(len/2);bombPositions.push({r,c:mid,type:BOMB});for(let i=0;i<len;i++)if(c+i!==mid)matchSet.add(`${r},${c+i}`);}else if(len===3){for(let i=0;i<3;i++)matchSet.add(`${r},${c+i}`);}c+=len;}}
@@ -201,7 +146,6 @@ function dropCandies(b){const nb=b.map(r=>[...r]);for(let c=0;c<COLS;c++){let e=
 function isAdj(r1,c1,r2,c2){return(Math.abs(r1-r2)===1&&c1===c2)||(Math.abs(c1-c2)===1&&r1===r2);}
 function findHint(b){const dirs=[[0,1],[0,-1],[1,0],[-1,0]];for(let r=0;r<ROWS;r++)for(let c=0;c<COLS;c++)for(const[dr,dc]of dirs){const nr=r+dr,nc=c+dc;if(nr<0||nr>=ROWS||nc<0||nc>=COLS)continue;const nb=b.map(row=>[...row]);[nb[r][c],nb[nr][nc]]=[nb[nr][nc],nb[r][c]];if(findMatches(nb).length>0)return[[r,c],[nr,nc]];}return null;}
 
-// ======= CSS =======
 const CSS=`
 @keyframes pop{0%{transform:scale(1)}50%{transform:scale(1.4);opacity:0.5}100%{transform:scale(0);opacity:0}}
 @keyframes comboAnim{0%{transform:scale(0) rotate(-10deg);opacity:0}50%{transform:scale(1.3) rotate(5deg);opacity:1}100%{transform:scale(1) rotate(0deg);opacity:0}}
@@ -236,15 +180,13 @@ const CSS=`
 .lb-panel{animation:slideDown 0.35s cubic-bezier(0.34,1.56,0.64,1) forwards;}
 .spinner{animation:spin 0.8s linear infinite;display:inline-block;}
 input:focus{outline:none;}
-.tab-btn{transition:all 0.2s;}.tab-btn.active{background:linear-gradient(135deg,#FF6B9D,#A855F7) !important;color:#fff !important;box-shadow:0 2px 8px rgba(168,85,247,0.4);}
+.world-tab{transition:all 0.2s;}.world-tab.active{background:linear-gradient(135deg,#FF6B9D,#A855F7) !important;color:#fff !important;box-shadow:0 2px 8px rgba(168,85,247,0.4);}
 `;
 const BG={minHeight:"100vh",background:"linear-gradient(135deg,#1a0533 0%,#2d0a5e 50%,#1a0533 100%)",fontFamily:"'Segoe UI',sans-serif"};
 const inputStyle={width:"100%",background:"rgba(255,255,255,0.08)",border:"1px solid rgba(255,255,255,0.2)",borderRadius:"12px",padding:"12px 16px",color:"#fff",fontSize:"1rem",boxSizing:"border-box",marginBottom:"12px"};
 const btnPrimary={width:"100%",background:"linear-gradient(135deg,#FF6B9D,#A855F7)",border:"none",borderRadius:"12px",padding:"13px",color:"#fff",fontSize:"1rem",fontWeight:800,cursor:"pointer",marginBottom:"10px"};
 
-// ===================== APP =====================
 export default function App(){
-  // Auth
   const[authScreen,setAuthScreen]=useState("login");
   const[username,setUsername]=useState("");
   const[password,setPassword]=useState("");
@@ -252,9 +194,7 @@ export default function App(){
   const[authShake,setAuthShake]=useState(false);
   const[authLoading,setAuthLoading]=useState(false);
   const[loggedUser,setLoggedUser]=useState(null);
-
-  // Game
-  const[screen,setScreen]=useState("worldSelect");
+  const[screen,setScreen]=useState("levelSelect");
   const[currentLevel,setCurrentLevel]=useState(0);
   const[board,setBoard]=useState(null);
   const[selected,setSelected]=useState(null);
@@ -276,36 +216,23 @@ export default function App(){
   const[newBombKeys,setNewBombKeys]=useState([]);
   const[showBombMsg,setShowBombMsg]=useState("");
   const[saveIndicator,setSaveIndicator]=useState(false);
-  const[levelTab,setLevelTab]=useState(0);
-
-  // Daily
   const[dailyAvailable,setDailyAvailable]=useState(false);
   const[showDailyPopup,setShowDailyPopup]=useState(false);
   const[dailyCollected,setDailyCollected]=useState(false);
   const[lastDailyDate,setLastDailyDate]=useState(null);
-
-  // Leaderboard
   const[showLeaderboard,setShowLeaderboard]=useState(false);
   const[lbData,setLbData]=useState([]);
   const[lbLoading,setLbLoading]=useState(false);
-
-  // Admin dashboard
   const[showAdmin,setShowAdmin]=useState(false);
   const[adminData,setAdminData]=useState([]);
   const[adminLoading,setAdminLoading]=useState(false);
+  const[selectedWorld,setSelectedWorld]=useState(0);
 
-  const lv=LEVELS[currentLevel];
+  const lv = LEVELS[currentLevel];
 
-  // Group levels into chunks of 10
-  const levelChunks = [];
-  for(let i=0; i<LEVELS.length; i+=10){
-    levelChunks.push(LEVELS.slice(i, i+10));
-  }
-
-  // ---- Firebase: auto-restore session ----
   useEffect(()=>{
     getFB().then(({auth})=>{
-      auth._fns.onAuthStateChanged(auth,async(user)=>{
+      auth._fns.onAuthStateChanged(auth, async(user)=>{
         if(user){
           const uname=user.email.replace("@market-altawfer.game","");
           const prof=await fsGetProfile(uname)||{unlockedLevels:1,coins:0,bestScore:0,lastDailyDate:null};
@@ -313,15 +240,12 @@ export default function App(){
           setUnlockedLevels(prof.unlockedLevels||1);
           setCoins(prof.coins||0);
           setLastDailyDate(prof.lastDailyDate||null);
-          const avail=canClaimDaily(prof.lastDailyDate||null);
-          setDailyAvailable(avail);
-          if(avail)setTimeout(()=>setShowDailyPopup(true),800);
+          setDailyAvailable(canClaimDaily(prof.lastDailyDate||null));
         }
       });
     });
   },[]);
 
-  // ---- Auto-save to Firestore ----
   const saveToCloud=useCallback(async(data)=>{
     if(!loggedUser)return;
     await fsSaveProfile(loggedUser,data);
@@ -329,7 +253,6 @@ export default function App(){
     setTimeout(()=>setSaveIndicator(false),1500);
   },[loggedUser]);
 
-  // ---- Auth ----
   const triggerShake=()=>{setAuthShake(true);setTimeout(()=>setAuthShake(false),400);};
 
   const handleLogin=async()=>{
@@ -340,8 +263,8 @@ export default function App(){
       await fbLogin(u,password);
       setUsername("");setPassword("");
     }catch(e){
-      const msg=e.code==="auth/invalid-credential"||e.code==="auth/wrong-password"?"كلمة المرور غير صحيحة":e.code==="auth/user-not-found"?"المستخدم غير موجود":"خطأ في تسجيل الدخول";
-      setAuthError(msg);triggerShake();
+      setAuthError(e.code==="auth/invalid-credential"?"كلمة المرور غير صحيحة":"خطأ في تسجيل الدخول");
+      triggerShake();
     }
     setAuthLoading(false);
   };
@@ -357,19 +280,18 @@ export default function App(){
       await fsSaveProfile(u,{username:u,unlockedLevels:1,coins:0,bestScore:0,lastDailyDate:null,createdAt:new Date().toISOString()});
       setUsername("");setPassword("");
     }catch(e){
-      const msg=e.code==="auth/email-already-in-use"?"اسم المستخدم موجود مسبقاً":"خطأ في إنشاء الحساب";
-      setAuthError(msg);triggerShake();
+      setAuthError(e.code==="auth/email-already-in-use"?"اسم المستخدم موجود مسبقاً":"خطأ في إنشاء الحساب");
+      triggerShake();
     }
     setAuthLoading(false);
   };
 
   const handleLogout=async()=>{
     await fbLogout();
-    setLoggedUser(null);setScreen("worldSelect");
+    setLoggedUser(null);
     setUnlockedLevels(1);setCoins(0);setAuthError("");
   };
 
-  // ---- Daily Reward ----
   const claimDaily=async()=>{
     playCoin();
     const today=new Date().toISOString();
@@ -383,27 +305,23 @@ export default function App(){
     await saveToCloud({coins:newCoins,lastDailyDate:today});
   };
 
-  // ---- Leaderboard ----
   const openLeaderboard=async()=>{
     setShowLeaderboard(true);setLbLoading(true);
-    const data=await fsGetLeaderboard();
-    setLbData(data);setLbLoading(false);
+    setLbData(await fsGetLeaderboard());
+    setLbLoading(false);
   };
 
-  // ---- Admin Dashboard ----
   const openAdmin=async()=>{
     setShowAdmin(true);setAdminLoading(true);
     try{
       const{db}=await getFB();
       const{collection,getDocs,query,orderBy}=db._fns;
-      const q=query(collection(db,"players"),orderBy("unlockedLevels","desc"));
-      const snap=await getDocs(q);
+      const snap=await getDocs(query(collection(db,"players"),orderBy("unlockedLevels","desc")));
       setAdminData(snap.docs.map(d=>({id:d.id,...d.data()})));
     }catch(e){console.error(e);}
     setAdminLoading(false);
   };
 
-  // ---- Game ----
   const startLevel=useCallback((idx)=>{
     setCurrentLevel(idx);setBoard(createBoard());setScore(0);setMoves(LEVELS[idx].moves);
     setSelected(null);setAnimating(false);setMatchedCells([]);setHintsLeft(2);setHintCells(null);
@@ -423,8 +341,7 @@ export default function App(){
     if(explodedRows.length||explodedCols.length){
       playBomb();setExplodingRows(explodedRows);setExplodingCols(explodedCols);
       const cells=explodedRows.length*COLS+explodedCols.length*ROWS;
-      const nrs=rs+cells*20*(cc+1);
-      setTimeout(()=>{setScore(s=>s+cells*20*(cc+1));setExplodingRows([]);setExplodingCols([]);const b3=dropCandies(afterBombs);setBoard(b3);setTimeout(()=>processMatches(b3,cc+1,nrs,ml,ts,li),300);},550);
+      setTimeout(()=>{setScore(s=>s+cells*20*(cc+1));setExplodingRows([]);setExplodingCols([]);const b3=dropCandies(afterBombs);setBoard(b3);setTimeout(()=>processMatches(b3,cc+1,rs+cells*20*(cc+1),ml,ts,li),300);},550);
       return;
     }
     const{matches,bombPositions}=findMatchesAndBombs(b);
@@ -450,9 +367,8 @@ export default function App(){
       return;
     }
     playMatch();setMatchedCells(matches);
-    const pts=matches.length*10*(cc+1);const nrs=rs+pts;
     setTimeout(()=>{
-      setScore(s=>s+pts);let b2=removeMatches(b,matches);
+      setScore(s=>s+matches.length*10*(cc+1));let b2=removeMatches(b,matches);
       if(bombPositions.length){
         b2=placeBombs(b2,bombPositions);
         setNewBombKeys(bombPositions.map(({r,c,type})=>({key:`${r},${c}`,type})));
@@ -461,7 +377,7 @@ export default function App(){
         setTimeout(()=>{setNewBombKeys([]);setShowBombMsg("");},1400);
       }
       const b3=dropCandies(b2);setBoard(b3);setMatchedCells([]);
-      setTimeout(()=>processMatches(b3,cc+1,nrs,ml,ts,li),300);
+      setTimeout(()=>processMatches(b3,cc+1,rs+matches.length*10*(cc+1),ml,ts,li),300);
     },400);
   },[coins,unlockedLevels,loggedUser,saveToCloud]);
 
@@ -492,198 +408,10 @@ export default function App(){
   const progress=lv?Math.min(100,Math.round((score/lv.targetScore)*100)):0;
 
   const CoinBar=()=>(
-    <div style={{display:"flex",alignItems:"center",gap:"6px",background:"rgba(255,215,0,0.12)",border:"1px solid rgba(255,215,0,0.35)",borderRadius:"20px",padding:"4px 12px",fontSize:"0.85rem",fontWeight:800,color:"#FFD700"}}>
-      🪙 {coins}
-    </div>
+    <div style={{display:"flex",alignItems:"center",gap:"6px",background:"rgba(255,215,0,0.12)",border:"1px solid rgba(255,215,0,0.35)",borderRadius:"20px",padding:"4px 12px",fontSize:"0.85rem",fontWeight:800,color:"#FFD700"}}>🪙 {coins}</div>
   );
 
   const Spinner=()=><span className="spinner">⏳</span>;
-
-  // Level Select Screen with Tabs
-  const LevelSelectScreen = () => (
-    <div style={{minHeight:"100vh",background:"linear-gradient(135deg,#1a0533 0%,#2d0a5e 50%,#1a0533 100%)",fontFamily:"'Segoe UI',sans-serif",display:"flex",flexDirection:"column",alignItems:"center",padding:"20px",overflowY:"auto"}}>
-      <style>{CSS}</style>
-
-      {/* Daily popup */}
-      {showDailyPopup&&(
-        <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.75)",zIndex:300,display:"flex",alignItems:"center",justifyContent:"center",padding:"24px"}}>
-          <div className="daily-popup" style={{background:"linear-gradient(135deg,#2d0a5e,#1a0533)",border:"2px solid rgba(255,215,0,0.5)",borderRadius:"24px",padding:"36px 28px",maxWidth:"320px",width:"100%",textAlign:"center"}}>
-            <div style={{fontSize:"4rem",marginBottom:"8px"}}>🎁</div>
-            <h2 style={{color:"#FFD700",fontSize:"1.6rem",fontWeight:900,margin:"0 0 6px 0"}}>مكافأتك اليومية!</h2>
-            <p style={{color:"rgba(255,255,255,0.5)",fontSize:"0.85rem",margin:"0 0 20px 0"}}>ارجع كل يوم واحصل على عملات مجانية</p>
-            <div className="daily-glow" style={{background:"rgba(255,215,0,0.1)",border:"1px solid rgba(255,215,0,0.4)",borderRadius:"16px",padding:"18px",marginBottom:"22px"}}>
-              <div style={{color:"#FFD700",fontSize:"3rem",fontWeight:900}}>+{DAILY_REWARD}</div>
-              <div style={{color:"#FFD700",fontSize:"1rem",fontWeight:700}}>عملات ذهبية 🪙</div>
-            </div>
-            <button onClick={claimDaily} style={{width:"100%",background:"linear-gradient(135deg,#FFD700,#FF9800)",border:"none",borderRadius:"14px",padding:"14px",color:"#1a0533",fontSize:"1.1rem",fontWeight:900,cursor:"pointer"}}>🎉 استلم المكافأة</button>
-          </div>
-        </div>
-      )}
-
-      {/* Daily collected toast */}
-      {dailyCollected&&<div style={{position:"fixed",top:"16px",left:"50%",transform:"translateX(-50%)",zIndex:400,background:"linear-gradient(135deg,#FFD700,#FF9800)",borderRadius:"12px",padding:"10px 22px",color:"#1a0533",fontWeight:900,fontSize:"1rem",animation:"bounceIn 0.4s forwards",whiteSpace:"nowrap"}}>🎁 +{DAILY_REWARD}🪙 تم الاستلام!</div>}
-
-      {/* Leaderboard overlay */}
-      {showLeaderboard&&(
-        <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.75)",zIndex:300,display:"flex",alignItems:"flex-end",justifyContent:"center"}}>
-          <div className="lb-panel" style={{background:"linear-gradient(180deg,#2d0a5e,#1a0533)",border:"1px solid rgba(168,85,247,0.4)",borderRadius:"24px 24px 0 0",padding:"0 0 32px",width:"100%",maxWidth:"480px",maxHeight:"80vh",display:"flex",flexDirection:"column"}}>
-            <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"18px 20px 12px",borderBottom:"1px solid rgba(255,255,255,0.08)"}}>
-              <h2 style={{margin:0,fontSize:"1.2rem",fontWeight:900,background:"linear-gradient(90deg,#FFD700,#FF9800)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent"}}>🏆 لائحة المتصدرين</h2>
-              <button onClick={()=>setShowLeaderboard(false)} style={{background:"rgba(255,255,255,0.08)",border:"none",borderRadius:"8px",padding:"5px 12px",color:"rgba(255,255,255,0.6)",fontSize:"0.85rem",cursor:"pointer"}}>✕</button>
-            </div>
-            <p style={{color:"rgba(255,255,255,0.3)",fontSize:"0.7rem",textAlign:"center",margin:"6px 0"}}>☁️ بيانات حية من Firebase</p>
-            <div style={{overflowY:"auto",padding:"8px 16px",flex:1}}>
-              {lbLoading?<div style={{textAlign:"center",padding:"40px",color:"rgba(255,255,255,0.4)"}}>⏳ جاري التحميل...</div>
-              :lbData.length===0?<div style={{color:"rgba(255,255,255,0.3)",textAlign:"center",marginTop:"32px"}}>لا يوجد لاعبون بعد 👀</div>
-              :lbData.map((p,i)=>{
-                const medals=["🥇","🥈","🥉"];
-                const isMe=p.id===loggedUser;
-                const rankColor=i===0?"#FFD700":i===1?"#C0C0C0":i===2?"#CD7F32":"rgba(255,255,255,0.5)";
-                return(
-                  <div key={p.id} style={{display:"flex",alignItems:"center",gap:"10px",padding:"11px 14px",marginBottom:"8px",borderRadius:"14px",background:isMe?"rgba(168,85,247,0.15)":"rgba(255,255,255,0.04)",border:isMe?"1px solid rgba(168,85,247,0.4)":"1px solid rgba(255,255,255,0.06)"}}>
-                    <div style={{minWidth:"28px",textAlign:"center",fontSize:i<3?"1.3rem":"0.9rem",fontWeight:900,color:rankColor}}>{i<3?medals[i]:`#${i+1}`}</div>
-                    <div style={{width:"34px",height:"34px",borderRadius:"50%",background:isMe?"linear-gradient(135deg,#FF6B9D,#A855F7)":"linear-gradient(135deg,#4B5563,#374151)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:"0.9rem",fontWeight:800,color:"#fff",flexShrink:0}}>
-                      {(p.username||p.id)[0].toUpperCase()}
-                    </div>
-                    <div style={{flex:1,minWidth:0}}>
-                      <div style={{color:isMe?"#C084FC":"#fff",fontWeight:700,fontSize:"0.88rem",display:"flex",alignItems:"center",gap:"5px"}}>
-                        {p.username||p.id}{isMe&&<span style={{fontSize:"0.62rem",background:"rgba(168,85,247,0.3)",borderRadius:"5px",padding:"1px 5px",color:"#C084FC"}}>أنت</span>}
-                      </div>
-                      <div style={{color:"rgba(255,255,255,0.35)",fontSize:"0.68rem"}}>أفضل: {(p.bestScore||0).toLocaleString()}</div>
-                    </div>
-                    <div style={{textAlign:"center",flexShrink:0}}>
-                      <div style={{color:rankColor,fontWeight:900,fontSize:"0.95rem"}}>M{Math.min(p.unlockedLevels||1,20)}</div>
-                    </div>
-                    <div style={{color:"#FFD700",fontSize:"0.82rem",flexShrink:0}}>🪙{p.coins||0}</div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Header */}
-      <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",width:"100%",maxWidth:"400px",marginBottom:"10px"}}>
-        <h1 style={{fontSize:"1.5rem",fontWeight:900,background:"linear-gradient(90deg,#FF6B9D,#A855F7,#60a5fa)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent",margin:0}}>🛒 Market Altawfer</h1>
-        <div style={{display:"flex",gap:"6px",alignItems:"center"}}>
-          <button onClick={openLeaderboard} style={{background:"rgba(255,215,0,0.1)",border:"1px solid rgba(255,215,0,0.3)",borderRadius:"10px",padding:"5px 10px",color:"#FFD700",fontSize:"0.8rem",cursor:"pointer",fontWeight:700}}>🏆</button>
-          {loggedUser===ADMIN_USER&&<button onClick={openAdmin} style={{background:"rgba(168,85,247,0.15)",border:"1px solid rgba(168,85,247,0.35)",borderRadius:"10px",padding:"5px 10px",color:"#A855F7",fontSize:"0.8rem",cursor:"pointer",fontWeight:700}}>⚙️</button>}
-          <CoinBar/>
-        </div>
-      </div>
-
-      {/* User bar */}
-      <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",width:"100%",maxWidth:"400px",background:"rgba(255,255,255,0.06)",border:"1px solid rgba(255,255,255,0.12)",borderRadius:"12px",padding:"8px 14px",marginBottom:"12px"}}>
-        <div style={{display:"flex",alignItems:"center",gap:"8px"}}>
-          <div style={{width:"32px",height:"32px",borderRadius:"50%",background:"linear-gradient(135deg,#FF6B9D,#A855F7)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:"1rem",fontWeight:800,color:"#fff"}}>{loggedUser[0].toUpperCase()}</div>
-          <div>
-            <div style={{color:"#fff",fontWeight:700,fontSize:"0.88rem"}}>{loggedUser}</div>
-            <div style={{color:"rgba(255,255,255,0.35)",fontSize:"0.68rem"}}>{saveIndicator?"💾 تم الحفظ ✓ ":"☁️ Firebase"}M{Math.min(unlockedLevels,20)}/{LEVELS.length}</div>
-          </div>
-        </div>
-        <button onClick={handleLogout} style={{background:"rgba(255,50,50,0.12)",border:"1px solid rgba(255,50,50,0.25)",borderRadius:"8px",padding:"5px 12px",color:"rgba(255,100,100,0.9)",fontSize:"0.78rem",cursor:"pointer"}}>خروج</button>
-      </div>
-
-      {/* Daily card */}
-      <div style={{width:"100%",maxWidth:"400px",marginBottom:"12px"}}>
-        {dailyAvailable?(
-          <button onClick={()=>setShowDailyPopup(true)} className="daily-glow" style={{width:"100%",background:"linear-gradient(135deg,rgba(255,215,0,0.15),rgba(255,150,0,0.1))",border:"2px solid rgba(255,215,0,0.5)",borderRadius:"14px",padding:"11px 16px",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"space-between",boxSizing:"border-box"}}>
-            <div style={{display:"flex",alignItems:"center",gap:"10px"}}>
-              <div style={{fontSize:"1.8rem"}}>🎁</div>
-              <div style={{textAlign:"right"}}>
-                <div style={{color:"#FFD700",fontWeight:800,fontSize:"0.88rem"}}>مكافأتك اليومية جاهزة!</div>
-                <div style={{color:"rgba(255,255,255,0.45)",fontSize:"0.7rem"}}>استلم {DAILY_REWARD}🪙 مجاناً</div>
-              </div>
-            </div>
-            <div style={{background:"linear-gradient(135deg,#FFD700,#FF9800)",borderRadius:"10px",padding:"5px 12px",color:"#1a0533",fontWeight:900,fontSize:"0.82rem"}}>استلم</div>
-          </button>
-        ):(
-          <div style={{width:"100%",background:"rgba(255,255,255,0.03)",border:"1px solid rgba(255,255,255,0.07)",borderRadius:"14px",padding:"9px 16px",display:"flex",alignItems:"center",justifyContent:"space-between",boxSizing:"border-box"}}>
-            <div style={{display:"flex",alignItems:"center",gap:"8px"}}>
-              <div style={{fontSize:"1.4rem",opacity:0.3}}>🎁</div>
-              <div>
-                <div style={{color:"rgba(255,255,255,0.25)",fontWeight:700,fontSize:"0.82rem"}}>المكافأة اليومية</div>
-                <div style={{color:"rgba(255,255,255,0.18)",fontSize:"0.66rem"}}>تعود بعد {timeUntilNextDaily()}</div>
-              </div>
-            </div>
-            <div style={{color:"rgba(255,255,255,0.18)",fontSize:"0.75rem"}}>✓ تم</div>
-          </div>
-        )}
-      </div>
-
-      <p style={{color:"rgba(255,215,0,0.65)",fontSize:"0.75rem",margin:"0 0 12px 0",background:"rgba(255,100,0,0.08)",border:"1px solid rgba(255,100,0,0.18)",borderRadius:"10px",padding:"4px 12px"}}>
-        💣 4 أفقي = يدمر الصف • 🧨 4 عمودي = يدمر العمود
-      </p>
-
-      {/* Tabs for level chunks */}
-      <div style={{display:"flex",flexWrap:"wrap",justifyContent:"center",gap:"8px",marginBottom:"16px",maxWidth:"400px"}}>
-        {levelChunks.map((chunk, idx) => {
-          const startLevel = idx * 10 + 1;
-          const endLevel = Math.min((idx + 1) * 10, LEVELS.length);
-          return (
-            <button
-              key={idx}
-              onClick={() => setLevelTab(idx)}
-              className={`tab-btn ${levelTab === idx ? "active" : ""}`}
-              style={{
-                padding:"8px 14px",
-                borderRadius:"12px",
-                background:levelTab === idx ? "linear-gradient(135deg,#FF6B9D,#A855F7)" : "rgba(255,255,255,0.08)",
-                border:"1px solid rgba(255,255,255,0.15)",
-                color:levelTab === idx ? "#fff" : "rgba(255,255,255,0.6)",
-                fontSize:"0.8rem",
-                fontWeight:600,
-                cursor:"pointer",
-                transition:"all 0.2s"
-              }}
-            >
-              {startLevel}-{endLevel}
-            </button>
-          );
-        })}
-      </div>
-
-      {/* Level grid for current tab */}
-      <div style={{
-        display: "grid",
-        gridTemplateColumns: "repeat(3, 1fr)",
-        gap: "15px",
-        width: "100%",
-        maxWidth: "400px",
-        padding: "20px",
-        backgroundColor: "rgba(0,0,0,0.2)",
-        borderRadius: "15px"
-      }}>
-        {levelChunks[levelTab]?.map((l, idx) => {
-          const globalIdx = levelTab * 10 + idx;
-          const locked = globalIdx >= unlockedLevels;
-          const done = globalIdx < unlockedLevels - 1;
-          return(
-            <div key={globalIdx} className="lvbtn" onClick={()=>!locked && startLevel(globalIdx)} style={{
-              background: locked ? "rgba(255,255,255,0.04)" : done ? "linear-gradient(135deg,#10B981,#047857)" : "linear-gradient(135deg,#FF6B9D,#A855F7)",
-              border: locked ? "1px solid rgba(255,255,255,0.07)" : "1px solid rgba(255,255,255,0.2)",
-              borderRadius: "14px",
-              padding: "12px 6px",
-              textAlign: "center",
-              cursor: locked ? "not-allowed" : "pointer",
-              opacity: locked ? 0.4 : 1,
-              boxShadow: locked ? "none" : "0 4px 14px rgba(168,85,247,0.3)"
-            }}>
-              <div style={{fontSize:"1.3rem",marginBottom:"3px"}}>{locked ? "🔒" : done ? "✅" : "▶️"}</div>
-              <div style={{color:"#fff",fontWeight:800,fontSize:"1rem"}}>{l.level}</div>
-              <div style={{color:"rgba(255,255,255,0.6)",fontSize:"0.58rem"}}>{l.moves} حركة</div>
-              <div style={{color:"rgba(255,255,255,0.4)",fontSize:"0.55rem"}}>{l.targetScore}⭐</div>
-            </div>
-          );
-        })}
-      </div>
-      
-      {levelChunks[levelTab]?.length === 0 && (
-        <div style={{color:"rgba(255,255,255,0.4)",textAlign:"center",marginTop:"40px"}}>لا توجد مراحل في هذه المجموعة</div>
-      )}
-    </div>
-  );
 
   // ==================== AUTH ====================
   if(!loggedUser)return(
@@ -795,23 +523,209 @@ export default function App(){
     </div>
   );
 
-  // ==================== WORLD SELECT (Original) ====================
-  if(screen==="worldSelect")return(
-    <div style={{minHeight:"100vh",background:"linear-gradient(135deg,#1a0533 0%,#2d0a5e 50%,#1a0533 100%)",fontFamily:"Segoe UI",display:"flex",flexDirection:"column",alignItems:"center",padding:"20px",overflowY:"auto"}}>
-      <style>{CSS}</style>
-      <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",width:"100%",maxWidth:"400px",marginBottom:"16px"}}>
-        <h1 style={{fontSize:"1.5rem",fontWeight:900,color:"#fff",margin:0}}>🌍 العوالم</h1>
-        <CoinBar/>
-      </div>
-      <div style={{width:"100%",maxWidth:"400px",display:"flex",flexDirection:"column",gap:"14px"}}>
-        {WORLDS.map((w)=>{const wl=LEVELS.slice(w.from,w.to+1);const comp=wl.filter((_,i)=>w.from+i<unlockedLevels-1).length;const tot=wl.length;const lck=unlockedLevels<=w.from;const pct=Math.round(comp/tot*100);return(<div key={w.id} onClick={()=>!lck&&setScreen("levelSelect")} style={{background:lck?"rgba(255,255,255,0.04)":w.color,borderRadius:"18px",padding:"18px 20px",cursor:lck?"not-allowed":"pointer",opacity:lck?0.4:1}}><div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:"10px"}}><div style={{display:"flex",alignItems:"center",gap:"10px"}}><div style={{fontSize:"2rem"}}>{lck?"🔒":w.icon}</div><div><div style={{color:"#fff",fontWeight:900}}>العالم {w.id}</div><div style={{color:"rgba(255,255,255,0.8)",fontSize:"0.82rem"}}>{w.name}</div></div></div><div style={{color:"#fff",fontWeight:800}}>{comp}/{tot}</div></div><div style={{height:"8px",background:"rgba(0,0,0,0.2)",borderRadius:"99px",overflow:"hidden"}}><div style={{height:"100%",width:pct+"%",background:"rgba(255,255,255,0.7)",borderRadius:"99px"}}/></div></div>);})}
-      </div>
-      <button onClick={handleLogout} style={{marginTop:"20px",background:"rgba(255,50,50,0.12)",border:"1px solid rgba(255,50,50,0.25)",borderRadius:"10px",padding:"8px 20px",color:"rgba(255,100,100,0.9)",cursor:"pointer"}}>خروج</button>
-    </div>
-  );
+  // ==================== LEVEL SELECT (with Worlds as Tabs) ====================
+  if(screen === "levelSelect") {
+    const currentWorld = WORLDS[selectedWorld];
+    const worldLevels = LEVELS.slice(currentWorld.startLevel, currentWorld.endLevel + 1);
+    const completedInWorld = worldLevels.filter((_, idx) => currentWorld.startLevel + idx < unlockedLevels - 1).length;
+    
+    return (
+      <div style={{minHeight:"100vh",background:"linear-gradient(135deg,#1a0533 0%,#2d0a5e 50%,#1a0533 100%)",fontFamily:"'Segoe UI',sans-serif",display:"flex",flexDirection:"column",alignItems:"center",padding:"20px",overflowY:"auto"}}>
+        <style>{CSS}</style>
 
-  // Level Select
-  if(screen==="levelSelect")return <LevelSelectScreen />;
+        {/* Daily popup */}
+        {showDailyPopup && (
+          <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.75)",zIndex:300,display:"flex",alignItems:"center",justifyContent:"center",padding:"24px"}}>
+            <div className="daily-popup" style={{background:"linear-gradient(135deg,#2d0a5e,#1a0533)",border:"2px solid rgba(255,215,0,0.5)",borderRadius:"24px",padding:"36px 28px",maxWidth:"320px",width:"100%",textAlign:"center"}}>
+              <div style={{fontSize:"4rem",marginBottom:"8px"}}>🎁</div>
+              <h2 style={{color:"#FFD700",fontSize:"1.6rem",fontWeight:900,margin:"0 0 6px 0"}}>مكافأتك اليومية!</h2>
+              <p style={{color:"rgba(255,255,255,0.5)",fontSize:"0.85rem",margin:"0 0 20px 0"}}>ارجع كل يوم واحصل على عملات مجانية</p>
+              <div className="daily-glow" style={{background:"rgba(255,215,0,0.1)",border:"1px solid rgba(255,215,0,0.4)",borderRadius:"16px",padding:"18px",marginBottom:"22px"}}>
+                <div style={{color:"#FFD700",fontSize:"3rem",fontWeight:900}}>+{DAILY_REWARD}</div>
+                <div style={{color:"#FFD700",fontSize:"1rem",fontWeight:700}}>عملات ذهبية 🪙</div>
+              </div>
+              <button onClick={claimDaily} style={{width:"100%",background:"linear-gradient(135deg,#FFD700,#FF9800)",border:"none",borderRadius:"14px",padding:"14px",color:"#1a0533",fontSize:"1.1rem",fontWeight:900,cursor:"pointer"}}>🎉 استلم المكافأة</button>
+            </div>
+          </div>
+        )}
+
+        {dailyCollected && <div style={{position:"fixed",top:"16px",left:"50%",transform:"translateX(-50%)",zIndex:400,background:"linear-gradient(135deg,#FFD700,#FF9800)",borderRadius:"12px",padding:"10px 22px",color:"#1a0533",fontWeight:900,fontSize:"1rem",animation:"bounceIn 0.4s forwards",whiteSpace:"nowrap"}}>🎁 +{DAILY_REWARD}🪙 تم الاستلام!</div>}
+
+        {/* Leaderboard overlay */}
+        {showLeaderboard && (
+          <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.75)",zIndex:300,display:"flex",alignItems:"flex-end",justifyContent:"center"}}>
+            <div className="lb-panel" style={{background:"linear-gradient(180deg,#2d0a5e,#1a0533)",border:"1px solid rgba(168,85,247,0.4)",borderRadius:"24px 24px 0 0",padding:"0 0 32px",width:"100%",maxWidth:"480px",maxHeight:"80vh",display:"flex",flexDirection:"column"}}>
+              <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"18px 20px 12px",borderBottom:"1px solid rgba(255,255,255,0.08)"}}>
+                <h2 style={{margin:0,fontSize:"1.2rem",fontWeight:900,background:"linear-gradient(90deg,#FFD700,#FF9800)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent"}}>🏆 لائحة المتصدرين</h2>
+                <button onClick={()=>setShowLeaderboard(false)} style={{background:"rgba(255,255,255,0.08)",border:"none",borderRadius:"8px",padding:"5px 12px",color:"rgba(255,255,255,0.6)",fontSize:"0.85rem",cursor:"pointer"}}>✕</button>
+              </div>
+              <p style={{color:"rgba(255,255,255,0.3)",fontSize:"0.7rem",textAlign:"center",margin:"6px 0"}}>☁️ بيانات حية من Firebase</p>
+              <div style={{overflowY:"auto",padding:"8px 16px",flex:1}}>
+                {lbLoading ? <div style={{textAlign:"center",padding:"40px",color:"rgba(255,255,255,0.4)"}}>⏳ جاري التحميل...</div>
+                : lbData.length === 0 ? <div style={{color:"rgba(255,255,255,0.3)",textAlign:"center",marginTop:"32px"}}>لا يوجد لاعبون بعد 👀</div>
+                : lbData.map((p,i)=>{
+                    const medals=["🥇","🥈","🥉"];
+                    const isMe=p.id===loggedUser;
+                    const rankColor=i===0?"#FFD700":i===1?"#C0C0C0":i===2?"#CD7F32":"rgba(255,255,255,0.5)";
+                    return(
+                      <div key={p.id} style={{display:"flex",alignItems:"center",gap:"10px",padding:"11px 14px",marginBottom:"8px",borderRadius:"14px",background:isMe?"rgba(168,85,247,0.15)":"rgba(255,255,255,0.04)",border:isMe?"1px solid rgba(168,85,247,0.4)":"1px solid rgba(255,255,255,0.06)"}}>
+                        <div style={{minWidth:"28px",textAlign:"center",fontSize:i<3?"1.3rem":"0.9rem",fontWeight:900,color:rankColor}}>{i<3?medals[i]:`#${i+1}`}</div>
+                        <div style={{width:"34px",height:"34px",borderRadius:"50%",background:isMe?"linear-gradient(135deg,#FF6B9D,#A855F7)":"linear-gradient(135deg,#4B5563,#374151)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:"0.9rem",fontWeight:800,color:"#fff",flexShrink:0}}>
+                          {(p.username||p.id)[0].toUpperCase()}
+                        </div>
+                        <div style={{flex:1,minWidth:0}}>
+                          <div style={{color:isMe?"#C084FC":"#fff",fontWeight:700,fontSize:"0.88rem",display:"flex",alignItems:"center",gap:"5px"}}>
+                            {p.username||p.id}{isMe&&<span style={{fontSize:"0.62rem",background:"rgba(168,85,247,0.3)",borderRadius:"5px",padding:"1px 5px",color:"#C084FC"}}>أنت</span>}
+                          </div>
+                          <div style={{color:"rgba(255,255,255,0.35)",fontSize:"0.68rem"}}>أفضل: {(p.bestScore||0).toLocaleString()}</div>
+                        </div>
+                        <div style={{textAlign:"center",flexShrink:0}}>
+                          <div style={{color:rankColor,fontWeight:900,fontSize:"0.95rem"}}>M{Math.min(p.unlockedLevels||1,20)}</div>
+                        </div>
+                        <div style={{color:"#FFD700",fontSize:"0.82rem",flexShrink:0}}>🪙{p.coins||0}</div>
+                      </div>
+                    );
+                  })}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Header */}
+        <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",width:"100%",maxWidth:"400px",marginBottom:"10px"}}>
+          <h1 style={{fontSize:"1.5rem",fontWeight:900,background:"linear-gradient(90deg,#FF6B9D,#A855F7,#60a5fa)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent",margin:0}}>🛒 Market Altawfer</h1>
+          <div style={{display:"flex",gap:"6px",alignItems:"center"}}>
+            <button onClick={openLeaderboard} style={{background:"rgba(255,215,0,0.1)",border:"1px solid rgba(255,215,0,0.3)",borderRadius:"10px",padding:"5px 10px",color:"#FFD700",fontSize:"0.8rem",cursor:"pointer",fontWeight:700}}>🏆</button>
+            {loggedUser===ADMIN_USER && <button onClick={openAdmin} style={{background:"rgba(168,85,247,0.15)",border:"1px solid rgba(168,85,247,0.35)",borderRadius:"10px",padding:"5px 10px",color:"#A855F7",fontSize:"0.8rem",cursor:"pointer",fontWeight:700}}>⚙️</button>}
+            <CoinBar/>
+          </div>
+        </div>
+
+        {/* User bar */}
+        <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",width:"100%",maxWidth:"400px",background:"rgba(255,255,255,0.06)",border:"1px solid rgba(255,255,255,0.12)",borderRadius:"12px",padding:"8px 14px",marginBottom:"12px"}}>
+          <div style={{display:"flex",alignItems:"center",gap:"8px"}}>
+            <div style={{width:"32px",height:"32px",borderRadius:"50%",background:"linear-gradient(135deg,#FF6B9D,#A855F7)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:"1rem",fontWeight:800,color:"#fff"}}>{loggedUser[0].toUpperCase()}</div>
+            <div>
+              <div style={{color:"#fff",fontWeight:700,fontSize:"0.88rem"}}>{loggedUser}</div>
+              <div style={{color:"rgba(255,255,255,0.35)",fontSize:"0.68rem"}}>{saveIndicator?"💾 تم الحفظ ✓ ":"☁️ Firebase"}M{Math.min(unlockedLevels,60)}/{LEVELS.length}</div>
+            </div>
+          </div>
+          <button onClick={handleLogout} style={{background:"rgba(255,50,50,0.12)",border:"1px solid rgba(255,50,50,0.25)",borderRadius:"8px",padding:"5px 12px",color:"rgba(255,100,100,0.9)",fontSize:"0.78rem",cursor:"pointer"}}>خروج</button>
+        </div>
+
+        {/* Daily card */}
+        <div style={{width:"100%",maxWidth:"400px",marginBottom:"12px"}}>
+          {dailyAvailable ? (
+            <button onClick={()=>setShowDailyPopup(true)} className="daily-glow" style={{width:"100%",background:"linear-gradient(135deg,rgba(255,215,0,0.15),rgba(255,150,0,0.1))",border:"2px solid rgba(255,215,0,0.5)",borderRadius:"14px",padding:"11px 16px",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"space-between",boxSizing:"border-box"}}>
+              <div style={{display:"flex",alignItems:"center",gap:"10px"}}>
+                <div style={{fontSize:"1.8rem"}}>🎁</div>
+                <div style={{textAlign:"right"}}>
+                  <div style={{color:"#FFD700",fontWeight:800,fontSize:"0.88rem"}}>مكافأتك اليومية جاهزة!</div>
+                  <div style={{color:"rgba(255,255,255,0.45)",fontSize:"0.7rem"}}>استلم {DAILY_REWARD}🪙 مجاناً</div>
+                </div>
+              </div>
+              <div style={{background:"linear-gradient(135deg,#FFD700,#FF9800)",borderRadius:"10px",padding:"5px 12px",color:"#1a0533",fontWeight:900,fontSize:"0.82rem"}}>استلم</div>
+            </button>
+          ) : (
+            <div style={{width:"100%",background:"rgba(255,255,255,0.03)",border:"1px solid rgba(255,255,255,0.07)",borderRadius:"14px",padding:"9px 16px",display:"flex",alignItems:"center",justifyContent:"space-between",boxSizing:"border-box"}}>
+              <div style={{display:"flex",alignItems:"center",gap:"8px"}}>
+                <div style={{fontSize:"1.4rem",opacity:0.3}}>🎁</div>
+                <div>
+                  <div style={{color:"rgba(255,255,255,0.25)",fontWeight:700,fontSize:"0.82rem"}}>المكافأة اليومية</div>
+                  <div style={{color:"rgba(255,255,255,0.18)",fontSize:"0.66rem"}}>تعود بعد {timeUntilNextDaily()}</div>
+                </div>
+              </div>
+              <div style={{color:"rgba(255,255,255,0.18)",fontSize:"0.75rem"}}>✓ تم</div>
+            </div>
+          )}
+        </div>
+
+        <p style={{color:"rgba(255,215,0,0.65)",fontSize:"0.75rem",margin:"0 0 12px 0",background:"rgba(255,100,0,0.08)",border:"1px solid rgba(255,100,0,0.18)",borderRadius:"10px",padding:"4px 12px"}}>
+          💣 4 متتالية أفقياً = قنبلة تدمر الصف • 🧨 4 متتالية عمودياً = قنبلة تدمر العمود
+        </p>
+
+        {/* World Tabs - 4 عوالم */}
+        <div style={{display:"flex",flexWrap:"wrap",justifyContent:"center",gap:"8px",marginBottom:"20px",maxWidth:"400px"}}>
+          {WORLDS.map((world, idx) => {
+            const worldLevelsCount = world.endLevel - world.startLevel + 1;
+            const completed = LEVELS.slice(world.startLevel, world.endLevel + 1).filter((_, i) => world.startLevel + i < unlockedLevels - 1).length;
+            return (
+              <button
+                key={world.id}
+                onClick={() => setSelectedWorld(idx)}
+                className={`world-tab ${selectedWorld === idx ? "active" : ""}`}
+                style={{
+                  padding:"10px 16px",
+                  borderRadius:"30px",
+                  background:selectedWorld === idx ? "linear-gradient(135deg,#FF6B9D,#A855F7)" : "rgba(255,255,255,0.08)",
+                  border:"1px solid rgba(255,255,255,0.15)",
+                  color:selectedWorld === idx ? "#fff" : "rgba(255,255,255,0.7)",
+                  fontSize:"0.85rem",
+                  fontWeight:600,
+                  cursor:"pointer",
+                  transition:"all 0.2s",
+                  display:"flex",
+                  alignItems:"center",
+                  gap:"6px"
+                }}
+              >
+                <span>{world.icon}</span>
+                <span>{world.name.split(" ")[1] || world.name}</span>
+                <span style={{fontSize:"0.7rem", opacity:0.8}}>({completed}/{worldLevelsCount})</span>
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Current World Info */}
+        <div style={{background:currentWorld.color, borderRadius:"16px", padding:"12px 20px", marginBottom:"16px", textAlign:"center", width:"100%", maxWidth:"400px"}}>
+          <div style={{fontSize:"2rem"}}>{currentWorld.icon}</div>
+          <div style={{color:"#fff", fontWeight:900, fontSize:"1.1rem"}}>{currentWorld.name}</div>
+          <div style={{color:"rgba(255,255,255,0.8)", fontSize:"0.75rem", marginTop:"4px"}}>
+            أكملت {completedInWorld} من {worldLevels.length} مرحلة
+          </div>
+          <div style={{height:"6px", background:"rgba(0,0,0,0.3)", borderRadius:"99px", marginTop:"8px", overflow:"hidden"}}>
+            <div style={{height:"100%", width: `${(completedInWorld / worldLevels.length) * 100}%`, background:"rgba(255,255,255,0.8)", borderRadius:"99px"}}/>
+          </div>
+        </div>
+
+        {/* Level Grid - 15 مرحلة لكل عالم */}
+        <div style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(3, 1fr)",
+          gap: "15px",
+          width: "100%",
+          maxWidth: "400px",
+          padding: "20px",
+          backgroundColor: "rgba(0,0,0,0.2)",
+          borderRadius: "15px"
+        }}>
+          {worldLevels.map((level, idx) => {
+            const globalIdx = currentWorld.startLevel + idx;
+            const locked = globalIdx >= unlockedLevels;
+            const done = globalIdx < unlockedLevels - 1;
+            return(
+              <div key={globalIdx} className="lvbtn" onClick={()=>!locked && startLevel(globalIdx)} style={{
+                background: locked ? "rgba(255,255,255,0.04)" : done ? "linear-gradient(135deg,#10B981,#047857)" : "linear-gradient(135deg,#FF6B9D,#A855F7)",
+                border: locked ? "1px solid rgba(255,255,255,0.07)" : "1px solid rgba(255,255,255,0.2)",
+                borderRadius: "14px",
+                padding: "12px 6px",
+                textAlign: "center",
+                cursor: locked ? "not-allowed" : "pointer",
+                opacity: locked ? 0.4 : 1,
+                boxShadow: locked ? "none" : "0 4px 14px rgba(168,85,247,0.3)"
+              }}>
+                <div style={{fontSize:"1.3rem",marginBottom:"3px"}}>{locked ? "🔒" : done ? "✅" : "▶️"}</div>
+                <div style={{color:"#fff",fontWeight:800,fontSize:"1rem"}}>{level.level}</div>
+                <div style={{color:"rgba(255,255,255,0.6)",fontSize:"0.58rem"}}>{level.moves} حركة</div>
+                <div style={{color:"rgba(255,255,255,0.4)",fontSize:"0.55rem"}}>{level.targetScore}⭐</div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    );
+  }
 
   // ==================== GAME OVER ====================
   if(screen==="gameOver")return(
@@ -938,7 +852,7 @@ export default function App(){
           💡 ({hintsLeft}/2)
         </button>
       </div>
-      <p style={{color:"rgba(255,255,255,0.2)",fontSize:"0.65rem",marginTop:"8px",textAlign:"center"}}>4 أفقي=💣صف • 4 عمودي=🧨عمود</p>
+      <p style={{color:"rgba(255,255,255,0.2)",fontSize:"0.65rem",marginTop:"8px",textAlign:"center"}}>4 متتالية أفقياً = قنبلة صف • 4 متتالية عمودياً = قنبلة عمود</p>
     </div>
   );
 }
