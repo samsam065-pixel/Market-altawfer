@@ -609,7 +609,6 @@ if (screen === "levelSelect") {
   );
 }
 
-      )}
       {dailyCollected&&<div style={{position:"fixed",top:"16px",left:"50%",transform:"translateX(-50%)",zIndex:400,background:"linear-gradient(135deg,#FFD700,#FF9800)",borderRadius:"12px",padding:"10px 22px",color:"#1a0533",fontWeight:900,fontSize:"1rem",animation:"bounceIn 0.4s forwards",whiteSpace:"nowrap"}}>🎁 +{DAILY_REWARD}🪙 تم الاستلام!</div>}
 
       {/* Leaderboard overlay */}
