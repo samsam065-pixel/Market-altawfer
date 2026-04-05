@@ -453,36 +453,30 @@ export default function App() {
       setNewsList(news);
     } catch (e) {
       console.error("Error fetching news:", e);
-      if (newsList.length === 0) {
-        setNewsList([
-          { id: "1", title: "🎉 مرحباً في سوق التوفير!", content: "نتمنى لك تسوقاً ممتعاً", icon: "🎉", type: "announcement", createdAt: new Date().toISOString() },
-          { id: "2", title: "🍌 موز طازج", content: "وصل حديثاً بجودة ممتازة", icon: "🍌", type: "new", createdAt: new Date().toISOString() }
-        ]);
-      }
+      setNewsList([]);
     }
   };
 
   const saveNewsToCloud = async (newsData) => {
     try {
       const { db } = await getFB();
-      const { doc, setDoc, collection, addDoc } = db._fns;
+      const { collection, addDoc } = db._fns;
       
-      if (newsData.id) {
-        await setDoc(doc(db, "market_news", newsData.id), {
-          ...newsData,
-          updatedAt: new Date().toISOString()
-        }, { merge: true });
-      } else {
-        await addDoc(collection(db, "market_news"), {
-          ...newsData,
-          createdAt: new Date().toISOString(),
-          author: loggedUser
-        });
-      }
-      await fetchNews();
+      const docRef = await addDoc(collection(db, "market_news"), {
+        title: newsData.title,
+        content: newsData.content,
+        icon: newsData.icon || "📰",
+        type: newsData.type,
+        link: newsData.link || "",
+        expiresIn: newsData.expiresIn || 7,
+        createdAt: new Date().toISOString(),
+        author: loggedUser
+      });
+      
       return true;
     } catch (e) {
       console.error("Error saving news:", e);
+      alert("خطأ في الحفظ: " + e.message);
       return false;
     }
   };
@@ -495,8 +489,10 @@ export default function App() {
       await deleteDoc(doc(db, "market_news", newsId));
       await fetchNews();
       playCoin();
+      alert("✅ تم حذف الخبر");
     } catch (e) {
       console.error("Error deleting news:", e);
+      alert("❌ فشل الحذف: " + e.message);
     }
   };
 
@@ -512,19 +508,25 @@ export default function App() {
 
   const handleSaveNews = async () => {
     if (!newsForm.title.trim() || !newsForm.content.trim()) {
-      alert("الرجاء إدخال عنوان ومحتوى الخبر");
+      alert("⚠️ الرجاء إدخال عنوان ومحتوى الخبر");
       return;
     }
     
     setNewsLoading(true);
+    
     const success = await saveNewsToCloud({
       ...newsForm,
       id: editingNews?.id
     });
+    
     if (success) {
       playWin();
       setShowNewsEditor(false);
+      setNewsForm({ title: "", content: "", icon: "📰", type: "sale", link: "", expiresIn: 7 });
+      await fetchNews();
+      alert("✅ تم نشر الخبر بنجاح!");
     }
+    
     setNewsLoading(false);
   };
 
@@ -1054,7 +1056,14 @@ export default function App() {
               </div>
               <div style={{ overflowY: "auto", padding: "16px", flex: 1 }}>
                 {newsList.length === 0 ? (
-                  <div style={{ textAlign: "center", padding: "40px", color: "rgba(255,255,255,0.4)" }}>📭 لا توجد أخبار حالياً، تابعنا قريباً!</div>
+                  <div style={{ textAlign: "center", padding: "40px", color: "rgba(255,255,255,0.4)" }}>
+                    📭 لا توجد أخبار حالياً
+                    {loggedUser === ADMIN_USER && (
+                      <button onClick={openNewsEditor} style={{ display: "block", margin: "16px auto 0", background: "#FF6B9D", border: "none", borderRadius: "10px", padding: "8px 16px", color: "#fff", cursor: "pointer" }}>
+                        ✏️ أضف أول خبر الآن
+                      </button>
+                    )}
+                  </div>
                 ) : (
                   newsList.map(news => (
                     <div key={news.id} onClick={() => setSelectedNews(news)} style={{ background: "rgba(255,255,255,0.05)", borderRadius: "16px", padding: "14px", marginBottom: "12px", cursor: "pointer", border: "1px solid rgba(255,255,255,0.08)" }}>
@@ -1113,7 +1122,7 @@ export default function App() {
           <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.95)", zIndex: 500, display: "flex", alignItems: "center", justifyContent: "center", padding: "20px" }}>
             <div style={{ background: "linear-gradient(135deg,#1a0533,#2d0a5e)", borderRadius: "28px", maxWidth: "450px", width: "100%", maxHeight: "90vh", overflowY: "auto", padding: "24px", border: "2px solid #FFD700" }}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px" }}>
-                <h2 style={{ color: "#FFD700", margin: 0 }}>✏️ {editingNews ? "تعديل خبر" : "كتابة خبر جديد"}</h2>
+                <h2 style={{ color: "#FFD700", margin: 0 }}>✏️ كتابة خبر جديد</h2>
                 <button onClick={() => setShowNewsEditor(false)} style={{ background: "rgba(255,255,255,0.1)", border: "none", borderRadius: "8px", padding: "5px 12px", color: "#fff", fontSize: "1rem", cursor: "pointer" }}>✕</button>
               </div>
               
@@ -1159,13 +1168,13 @@ export default function App() {
               
               <div style={{ display: "flex", gap: "10px" }}>
                 <button onClick={handleSaveNews} disabled={newsLoading} style={{ flex: 1, background: "linear-gradient(135deg,#10B981,#047857)", border: "none", borderRadius: "14px", padding: "12px", color: "#fff", fontWeight: 700, cursor: newsLoading ? "not-allowed" : "pointer" }}>
-                  {newsLoading ? "⏳ جاري الحفظ..." : "💾 نشر الخبر"}
+                  {newsLoading ? "⏳ جاري النشر..." : "📢 نشر الخبر"}
                 </button>
                 <button onClick={() => setShowNewsEditor(false)} style={{ background: "rgba(255,255,255,0.1)", border: "1px solid rgba(255,255,255,0.2)", borderRadius: "14px", padding: "12px 20px", color: "#fff", cursor: "pointer" }}>
                   إلغاء
                 </button>
               </div>
-              <p style={{ color: "rgba(255,255,255,0.3)", fontSize: "0.6rem", marginTop: "15px", textAlign: "center" }}>✨ الأخبار التي تنشرها ستظهر فوراً لجميع اللاعبين</p>
+              <p style={{ color: "rgba(255,255,255,0.3)", fontSize: "0.6rem", marginTop: "15px", textAlign: "center" }}>✨ الخبر سيظهر فوراً لجميع اللاعبين</p>
             </div>
           </div>
         )}
