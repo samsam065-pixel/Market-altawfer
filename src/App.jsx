@@ -14,12 +14,12 @@ let _app = null, _db = null, _auth = null;
 async function getFB() {
   if (_db) return { db: _db, auth: _auth };
   const { initializeApp, getApps } = await import("https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js");
-  const { getFirestore, doc, getDoc, setDoc, updateDoc, collection, getDocs, query, orderBy, limit } = await import("https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js");
+  const { getFirestore, doc, getDoc, setDoc, updateDoc, collection, getDocs, query, orderBy, limit, addDoc, deleteDoc } = await import("https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js");
   const { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged } = await import("https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js");
   _app = getApps().length ? getApps()[0] : initializeApp(FB_CONFIG);
   _db = getFirestore(_app);
   _auth = getAuth(_app);
-  _db._fns = { doc, getDoc, setDoc, updateDoc, collection, getDocs, query, orderBy, limit };
+  _db._fns = { doc, getDoc, setDoc, updateDoc, collection, getDocs, query, orderBy, limit, addDoc, deleteDoc };
   _auth._fns = { createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged };
   return { db: _db, auth: _auth };
 }
@@ -176,6 +176,20 @@ const WORLDS = [
 
 const MOVES_PURCHASE_COST = 13, MOVES_PURCHASE_AMOUNT = 5, COINS_PER_LEVEL = 5, DAILY_REWARD = 5;
 const ADMIN_USER = "admin";
+
+// NEWS TYPES
+const NEWS_TYPES = {
+  sale: { bg: "linear-gradient(135deg,#FF4444,#CC0000)", icon: "🏷️", label: "عرض خاص", color: "#FF4444" },
+  new: { bg: "linear-gradient(135deg,#10B981,#047857)", icon: "🆕", label: "جديد", color: "#10B981" },
+  event: { bg: "linear-gradient(135deg,#A855F7,#7C3AED)", icon: "🎪", label: "فعالية", color: "#A855F7" },
+  offer: { bg: "linear-gradient(135deg,#FF9800,#F59E0B)", icon: "🎁", label: "عرض", color: "#FF9800" },
+  limited: { bg: "linear-gradient(135deg,#FF6B9D,#EC4899)", icon: "⏰", label: "عرض محدود", color: "#FF6B9D" },
+  boost: { bg: "linear-gradient(135deg,#FFD700,#FFB300)", icon: "⚡", label: "مضاعفة", color: "#FFD700" },
+  delivery: { bg: "linear-gradient(135deg,#00BCD4,#0284C7)", icon: "🚚", label: "توصيل", color: "#00BCD4" },
+  announcement: { bg: "linear-gradient(135deg,#3B82F6,#1D4ED8)", icon: "📢", label: "إعلان", color: "#3B82F6" }
+};
+
+const AVAILABLE_ICONS = ["📰", "🎉", "🍌", "🍚", "🫙", "🧴", "📦", "⭐", "💎", "🎁", "🏷️", "🚚", "📢", "⚡", "⏰", "🆕"];
 
 function canClaimDaily(lastDailyDate) {
   if (!lastDailyDate) return true;
@@ -382,6 +396,22 @@ export default function App() {
   const [wheelResult, setWheelResult] = useState(null);
   const [lastSpinDate, setLastSpinDate] = useState(null);
 
+  // NEWS STATES
+  const [newsList, setNewsList] = useState([]);
+  const [showNewsPanel, setShowNewsPanel] = useState(false);
+  const [selectedNews, setSelectedNews] = useState(null);
+  const [showNewsEditor, setShowNewsEditor] = useState(false);
+  const [editingNews, setEditingNews] = useState(null);
+  const [newsForm, setNewsForm] = useState({
+    title: "",
+    content: "",
+    icon: "📰",
+    type: "sale",
+    link: "",
+    expiresIn: 7
+  });
+  const [newsLoading, setNewsLoading] = useState(false);
+
   const lv = LEVELS[currentLevel];
 
   // SPIN REWARDS
@@ -412,6 +442,92 @@ export default function App() {
     return `${Math.floor(diff / 3600000)}س ${Math.floor((diff % 3600000) / 60000)}د`;
   };
 
+  // NEWS FUNCTIONS
+  const fetchNews = async () => {
+    try {
+      const { db } = await getFB();
+      const { collection, getDocs, query, orderBy } = db._fns;
+      const newsQuery = query(collection(db, "market_news"), orderBy("createdAt", "desc"));
+      const snapshot = await getDocs(newsQuery);
+      const news = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      setNewsList(news);
+    } catch (e) {
+      console.error("Error fetching news:", e);
+      if (newsList.length === 0) {
+        setNewsList([
+          { id: "1", title: "🎉 مرحباً في سوق التوفير!", content: "نتمنى لك تسوقاً ممتعاً", icon: "🎉", type: "announcement", createdAt: new Date().toISOString() },
+          { id: "2", title: "🍌 موز طازج", content: "وصل حديثاً بجودة ممتازة", icon: "🍌", type: "new", createdAt: new Date().toISOString() }
+        ]);
+      }
+    }
+  };
+
+  const saveNewsToCloud = async (newsData) => {
+    try {
+      const { db } = await getFB();
+      const { doc, setDoc, collection, addDoc } = db._fns;
+      
+      if (newsData.id) {
+        await setDoc(doc(db, "market_news", newsData.id), {
+          ...newsData,
+          updatedAt: new Date().toISOString()
+        }, { merge: true });
+      } else {
+        await addDoc(collection(db, "market_news"), {
+          ...newsData,
+          createdAt: new Date().toISOString(),
+          author: loggedUser
+        });
+      }
+      await fetchNews();
+      return true;
+    } catch (e) {
+      console.error("Error saving news:", e);
+      return false;
+    }
+  };
+
+  const deleteNews = async (newsId) => {
+    if (!confirm("هل أنت متأكد من حذف هذا الخبر؟")) return;
+    try {
+      const { db } = await getFB();
+      const { deleteDoc, doc } = db._fns;
+      await deleteDoc(doc(db, "market_news", newsId));
+      await fetchNews();
+      playCoin();
+    } catch (e) {
+      console.error("Error deleting news:", e);
+    }
+  };
+
+  const openNewsEditor = () => {
+    if (loggedUser === ADMIN_USER) {
+      setShowNewsEditor(true);
+      setEditingNews(null);
+      setNewsForm({ title: "", content: "", icon: "📰", type: "sale", link: "", expiresIn: 7 });
+    } else {
+      alert("❌ هذه الخاصية متاحة فقط للإدارة!");
+    }
+  };
+
+  const handleSaveNews = async () => {
+    if (!newsForm.title.trim() || !newsForm.content.trim()) {
+      alert("الرجاء إدخال عنوان ومحتوى الخبر");
+      return;
+    }
+    
+    setNewsLoading(true);
+    const success = await saveNewsToCloud({
+      ...newsForm,
+      id: editingNews?.id
+    });
+    if (success) {
+      playWin();
+      setShowNewsEditor(false);
+    }
+    setNewsLoading(false);
+  };
+
   useEffect(() => {
     getFB().then(({ auth }) => {
       auth._fns.onAuthStateChanged(auth, async (user) => {
@@ -424,6 +540,7 @@ export default function App() {
           setLastDailyDate(prof.lastDailyDate || null);
           setLastSpinDate(prof.lastSpinDate || null);
           setDailyAvailable(canClaimDaily(prof.lastDailyDate || null));
+          fetchNews();
         }
       });
     });
@@ -798,6 +915,7 @@ export default function App() {
     const currentWorld = WORLDS[selectedWorld];
     const worldLevels = LEVELS.slice(currentWorld.startLevel, currentWorld.endLevel + 1);
     const completedInWorld = worldLevels.filter((_, idx) => currentWorld.startLevel + idx < unlockedLevels - 1).length;
+    const randomNewsForToday = newsList.length > 0 ? newsList[Math.floor(Math.random() * newsList.length)] : null;
 
     return (
       <div style={{ minHeight: "100vh", background: "linear-gradient(135deg,#1a0533 0%,#2d0a5e 50%,#1a0533 100%)", fontFamily: "'Segoe UI',sans-serif", display: "flex", flexDirection: "column", alignItems: "center", padding: "20px", overflowY: "auto" }}>
@@ -923,12 +1041,143 @@ export default function App() {
           </div>
         )}
         
+        {/* NEWS PANEL */}
+        {showNewsPanel && (
+          <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.85)", zIndex: 400, display: "flex", alignItems: "center", justifyContent: "center", padding: "20px" }}>
+            <div style={{ background: "linear-gradient(180deg,#1a0533,#2d0a5e)", borderRadius: "28px", maxWidth: "420px", width: "100%", maxHeight: "85vh", display: "flex", flexDirection: "column", overflow: "hidden", border: "2px solid #00BCD4" }}>
+              <div style={{ background: "linear-gradient(135deg,#00BCD4,#0284C7)", padding: "18px 20px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                <div>
+                  <h2 style={{ margin: 0, color: "#fff", fontSize: "1.3rem" }}>📰 أخبار السوبر ماركت</h2>
+                  <p style={{ margin: "4px 0 0 0", color: "rgba(255,255,255,0.7)", fontSize: "0.7rem" }}>آخر العروض والأخبار</p>
+                </div>
+                <button onClick={() => { setShowNewsPanel(false); setSelectedNews(null); }} style={{ background: "rgba(255,255,255,0.2)", border: "none", borderRadius: "8px", padding: "5px 12px", color: "#fff", fontSize: "1rem", cursor: "pointer" }}>✕</button>
+              </div>
+              <div style={{ overflowY: "auto", padding: "16px", flex: 1 }}>
+                {newsList.length === 0 ? (
+                  <div style={{ textAlign: "center", padding: "40px", color: "rgba(255,255,255,0.4)" }}>📭 لا توجد أخبار حالياً، تابعنا قريباً!</div>
+                ) : (
+                  newsList.map(news => (
+                    <div key={news.id} onClick={() => setSelectedNews(news)} style={{ background: "rgba(255,255,255,0.05)", borderRadius: "16px", padding: "14px", marginBottom: "12px", cursor: "pointer", border: "1px solid rgba(255,255,255,0.08)" }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                        <div style={{ fontSize: "2rem" }}>{news.icon || "📰"}</div>
+                        <div style={{ flex: 1 }}>
+                          <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap", marginBottom: "4px" }}>
+                            <span style={{ background: NEWS_TYPES[news.type]?.bg || "rgba(255,255,255,0.2)", borderRadius: "20px", padding: "2px 8px", fontSize: "0.6rem", fontWeight: 700, color: "#fff" }}>
+                              {NEWS_TYPES[news.type]?.icon} {NEWS_TYPES[news.type]?.label}
+                            </span>
+                            <span style={{ color: "#fff", fontWeight: 700, fontSize: "0.9rem" }}>{news.title}</span>
+                          </div>
+                          <p style={{ color: "rgba(255,255,255,0.5)", fontSize: "0.75rem", margin: 0 }}>
+                            {news.content.length > 80 ? news.content.substring(0, 80) + "..." : news.content}
+                          </p>
+                        </div>
+                        {loggedUser === ADMIN_USER && (
+                          <button onClick={(e) => { e.stopPropagation(); deleteNews(news.id); }} style={{ background: "rgba(255,50,50,0.3)", border: "none", borderRadius: "8px", padding: "4px 8px", color: "#FF8888", fontSize: "0.7rem", cursor: "pointer" }}>🗑️</button>
+                        )}
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+              <div style={{ padding: "12px 16px", borderTop: "1px solid rgba(255,255,255,0.08)", background: "rgba(0,0,0,0.2)" }}>
+                <p style={{ color: "rgba(255,255,255,0.3)", fontSize: "0.6rem", margin: 0, textAlign: "center" }}>🛒 عروض حقيقية من سوق التوفير • {newsList.length} خبر</p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* NEWS DETAIL MODAL */}
+        {selectedNews && (
+          <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.95)", zIndex: 500, display: "flex", alignItems: "center", justifyContent: "center", padding: "20px" }}>
+            <div style={{ background: "linear-gradient(135deg,#1a0533,#2d0a5e)", borderRadius: "32px", maxWidth: "340px", width: "100%", padding: "28px", textAlign: "center", border: `2px solid ${NEWS_TYPES[selectedNews.type]?.color || "#00BCD4"}`, animation: "bounceIn 0.4s forwards" }}>
+              <div style={{ fontSize: "4rem", marginBottom: "12px" }}>{selectedNews.icon || "📰"}</div>
+              <div style={{ display: "inline-block", background: NEWS_TYPES[selectedNews.type]?.bg || "rgba(0,188,212,0.3)", borderRadius: "20px", padding: "4px 12px", fontSize: "0.7rem", fontWeight: 700, marginBottom: "12px" }}>
+                {NEWS_TYPES[selectedNews.type]?.icon} {NEWS_TYPES[selectedNews.type]?.label}
+              </div>
+              <h3 style={{ color: "#FFD700", fontSize: "1.3rem", margin: "0 0 8px 0" }}>{selectedNews.title}</h3>
+              <p style={{ color: "rgba(255,255,255,0.7)", fontSize: "0.9rem", margin: "0 0 16px 0" }}>{selectedNews.content}</p>
+              {selectedNews.link && (
+                <a href={selectedNews.link} target="_blank" rel="noreferrer" style={{ display: "block", background: "linear-gradient(135deg,#FFD700,#FF9800)", borderRadius: "14px", padding: "12px", color: "#1a0533", fontWeight: 800, textDecoration: "none", marginBottom: "12px" }}>
+                  🎯 شارك الآن
+                </a>
+              )}
+              <button onClick={() => setSelectedNews(null)} style={{ width: "100%", background: "rgba(255,255,255,0.1)", border: "1px solid rgba(255,255,255,0.2)", borderRadius: "14px", padding: "10px", color: "#fff", cursor: "pointer" }}>
+                إغلاق
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* NEWS EDITOR */}
+        {showNewsEditor && (
+          <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.95)", zIndex: 500, display: "flex", alignItems: "center", justifyContent: "center", padding: "20px" }}>
+            <div style={{ background: "linear-gradient(135deg,#1a0533,#2d0a5e)", borderRadius: "28px", maxWidth: "450px", width: "100%", maxHeight: "90vh", overflowY: "auto", padding: "24px", border: "2px solid #FFD700" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px" }}>
+                <h2 style={{ color: "#FFD700", margin: 0 }}>✏️ {editingNews ? "تعديل خبر" : "كتابة خبر جديد"}</h2>
+                <button onClick={() => setShowNewsEditor(false)} style={{ background: "rgba(255,255,255,0.1)", border: "none", borderRadius: "8px", padding: "5px 12px", color: "#fff", fontSize: "1rem", cursor: "pointer" }}>✕</button>
+              </div>
+              
+              <div style={{ marginBottom: "15px" }}>
+                <label style={{ color: "rgba(255,255,255,0.7)", fontSize: "0.8rem", display: "block", marginBottom: "5px" }}>🎨 الأيقونة</label>
+                <div style={{ display: "flex", flexWrap: "wrap", gap: "8px" }}>
+                  {AVAILABLE_ICONS.map(icon => (
+                    <button key={icon} onClick={() => setNewsForm({ ...newsForm, icon })} style={{ background: newsForm.icon === icon ? "linear-gradient(135deg,#FFD700,#FF9800)" : "rgba(255,255,255,0.1)", border: "none", borderRadius: "10px", padding: "8px", fontSize: "1.3rem", cursor: "pointer", width: "45px" }}>
+                      {icon}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              
+              <div style={{ marginBottom: "15px" }}>
+                <label style={{ color: "rgba(255,255,255,0.7)", fontSize: "0.8rem", display: "block", marginBottom: "5px" }}>📋 نوع الخبر</label>
+                <select value={newsForm.type} onChange={(e) => setNewsForm({ ...newsForm, type: e.target.value })} style={{ width: "100%", padding: "10px", borderRadius: "10px", background: "rgba(255,255,255,0.1)", border: "1px solid rgba(255,255,255,0.2)", color: "#fff" }}>
+                  {Object.entries(NEWS_TYPES).map(([key, val]) => (
+                    <option key={key} value={key}>{val.icon} {val.label}</option>
+                  ))}
+                </select>
+              </div>
+              
+              <div style={{ marginBottom: "15px" }}>
+                <label style={{ color: "rgba(255,255,255,0.7)", fontSize: "0.8rem", display: "block", marginBottom: "5px" }}>📌 العنوان</label>
+                <input type="text" value={newsForm.title} onChange={(e) => setNewsForm({ ...newsForm, title: e.target.value })} placeholder="مثال: خصم 50% على جميع المنتجات" style={{ width: "100%", padding: "10px", borderRadius: "10px", background: "rgba(255,255,255,0.1)", border: "1px solid rgba(255,255,255,0.2)", color: "#fff" }} />
+              </div>
+              
+              <div style={{ marginBottom: "15px" }}>
+                <label style={{ color: "rgba(255,255,255,0.7)", fontSize: "0.8rem", display: "block", marginBottom: "5px" }}>📝 المحتوى</label>
+                <textarea value={newsForm.content} onChange={(e) => setNewsForm({ ...newsForm, content: e.target.value })} placeholder="اكتب تفاصيل الخبر هنا..." rows="4" style={{ width: "100%", padding: "10px", borderRadius: "10px", background: "rgba(255,255,255,0.1)", border: "1px solid rgba(255,255,255,0.2)", color: "#fff", resize: "vertical" }} />
+              </div>
+              
+              <div style={{ marginBottom: "15px" }}>
+                <label style={{ color: "rgba(255,255,255,0.7)", fontSize: "0.8rem", display: "block", marginBottom: "5px" }}>🔗 رابط (اختياري)</label>
+                <input type="text" value={newsForm.link} onChange={(e) => setNewsForm({ ...newsForm, link: e.target.value })} placeholder="https://..." style={{ width: "100%", padding: "10px", borderRadius: "10px", background: "rgba(255,255,255,0.1)", border: "1px solid rgba(255,255,255,0.2)", color: "#fff" }} />
+              </div>
+              
+              <div style={{ marginBottom: "20px" }}>
+                <label style={{ color: "rgba(255,255,255,0.7)", fontSize: "0.8rem", display: "block", marginBottom: "5px" }}>⏰ يبقى للأيام (0 = لا ينتهي)</label>
+                <input type="number" value={newsForm.expiresIn} onChange={(e) => setNewsForm({ ...newsForm, expiresIn: parseInt(e.target.value) || 0 })} min="0" max="30" style={{ width: "100%", padding: "10px", borderRadius: "10px", background: "rgba(255,255,255,0.1)", border: "1px solid rgba(255,255,255,0.2)", color: "#fff" }} />
+              </div>
+              
+              <div style={{ display: "flex", gap: "10px" }}>
+                <button onClick={handleSaveNews} disabled={newsLoading} style={{ flex: 1, background: "linear-gradient(135deg,#10B981,#047857)", border: "none", borderRadius: "14px", padding: "12px", color: "#fff", fontWeight: 700, cursor: newsLoading ? "not-allowed" : "pointer" }}>
+                  {newsLoading ? "⏳ جاري الحفظ..." : "💾 نشر الخبر"}
+                </button>
+                <button onClick={() => setShowNewsEditor(false)} style={{ background: "rgba(255,255,255,0.1)", border: "1px solid rgba(255,255,255,0.2)", borderRadius: "14px", padding: "12px 20px", color: "#fff", cursor: "pointer" }}>
+                  إلغاء
+                </button>
+              </div>
+              <p style={{ color: "rgba(255,255,255,0.3)", fontSize: "0.6rem", marginTop: "15px", textAlign: "center" }}>✨ الأخبار التي تنشرها ستظهر فوراً لجميع اللاعبين</p>
+            </div>
+          </div>
+        )}
+        
         {/* Header */}
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", width: "100%", maxWidth: "400px", marginBottom: "10px" }}>
           <h1 style={{ fontSize: "1.5rem", fontWeight: 900, background: "linear-gradient(90deg,#FF6B9D,#A855F7,#60a5fa)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", margin: 0 }}>🛒 Market Altawfer</h1>
           <div style={{ display: "flex", gap: "6px", alignItems: "center" }}>
             <button onClick={openLeaderboard} style={{ background: "rgba(255,215,0,0.1)", border: "1px solid rgba(255,215,0,0.3)", borderRadius: "10px", padding: "5px 10px", color: "#FFD700", fontSize: "0.8rem", cursor: "pointer", fontWeight: 700 }}>🏆</button>
             <button onClick={() => setShowLuckyWheel(true)} style={{ background: "linear-gradient(135deg,#FFD700,#FF9800)", border: "none", borderRadius: "10px", padding: "5px 10px", color: "#1a0533", fontSize: "0.8rem", cursor: "pointer", fontWeight: 700 }}>🎡 دوران</button>
+            <button onClick={() => setShowNewsPanel(true)} style={{ background: "linear-gradient(135deg,#00BCD4,#0284C7)", border: "none", borderRadius: "10px", padding: "5px 10px", color: "#fff", fontSize: "0.8rem", cursor: "pointer", fontWeight: 700 }}>📰 أخبار</button>
+            {loggedUser === ADMIN_USER && <button onClick={openNewsEditor} style={{ background: "linear-gradient(135deg,#FF6B9D,#A855F7)", border: "none", borderRadius: "10px", padding: "5px 10px", color: "#fff", fontSize: "0.8rem", cursor: "pointer", fontWeight: 700 }}>✏️ كتابة</button>}
             {loggedUser === ADMIN_USER && <button onClick={openAdmin} style={{ background: "rgba(168,85,247,0.15)", border: "1px solid rgba(168,85,247,0.35)", borderRadius: "10px", padding: "5px 10px", color: "#A855F7", fontSize: "0.8rem", cursor: "pointer", fontWeight: 700 }}>⚙️</button>}
             <CoinBar />
           </div>
@@ -972,6 +1221,25 @@ export default function App() {
             </div>
           )}
         </div>
+
+        {/* Random News Card */}
+        {randomNewsForToday && (
+          <div onClick={() => setSelectedNews(randomNewsForToday)} style={{ width: "100%", maxWidth: "400px", marginBottom: "12px", background: NEWS_TYPES[randomNewsForToday.type]?.bg || "linear-gradient(135deg,#2d0a5e,#1a0533)", borderRadius: "14px", padding: "10px 16px", cursor: "pointer", border: "1px solid rgba(255,255,255,0.2)" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+              <div style={{ fontSize: "1.8rem" }}>{randomNewsForToday.icon || "📰"}</div>
+              <div style={{ flex: 1 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: "6px", flexWrap: "wrap" }}>
+                  <span style={{ background: "rgba(255,255,255,0.2)", borderRadius: "20px", padding: "2px 8px", fontSize: "0.6rem", fontWeight: 700 }}>
+                    {NEWS_TYPES[randomNewsForToday.type]?.icon} {NEWS_TYPES[randomNewsForToday.type]?.label}
+                  </span>
+                  <span style={{ color: "#fff", fontWeight: 800, fontSize: "0.85rem" }}>{randomNewsForToday.title}</span>
+                </div>
+                <p style={{ color: "rgba(255,255,255,0.7)", fontSize: "0.7rem", margin: "4px 0 0 0" }}>{randomNewsForToday.content.substring(0, 50)}...</p>
+              </div>
+              <div style={{ fontSize: "0.8rem", color: "rgba(255,255,255,0.5)" }}>📖</div>
+            </div>
+          </div>
+        )}
         
         <p style={{ color: "rgba(255,215,0,0.65)", fontSize: "0.75rem", margin: "0 0 12px 0", background: "rgba(255,100,0,0.08)", border: "1px solid rgba(255,100,0,0.18)", borderRadius: "10px", padding: "4px 12px" }}>
           💣 4 متتالية أفقياً = قنبلة تدمر الصف • 🧨 4 متتالية عمودياً = قنبلة تدمر العمود
