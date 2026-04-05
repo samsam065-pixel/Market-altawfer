@@ -696,7 +696,8 @@ if (screen === "levelSelect") {
         )}
       </div>
 
-      <p style={{color:"rgba(255,215,0,0.65)",fontSize:"0.75rem",margin:"0 0 14px 0",background:"rgba(255,100,0,0.08)",border:"1px solid rgba(255,100,0,0.18)",borderRadius:"10px",padding:"4px 12px"}}>
+     borderRadius: "10px", padding: "10px", background: "#A855F7"
+
         💣 4 أفقي = يدمر الصف • 🧨 4 عمودي = يدمر العمود
       </p>
 
