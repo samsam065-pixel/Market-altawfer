@@ -610,31 +610,68 @@ export default function App(){
       })()}
     </div>
   );
-
-  // ==================== LEVEL SELECT ====================
-  if(screen==="worldSelect")return(
-<div style={{minHeight:"100vh",background:"linear-gradient(135deg,#1a0533 0%,#2d0a5e 50%,#1a0533 100%)",fontFamily:"Segoe UI",display:"flex",flexDirection:"column",alignItems:"center",padding:"20px",overflowY:"auto"}}><style>{CSS}</style><div style={{display:"flex",alignItems:"center",justifyContent:"space-between",width:"100%",maxWidth:"400px",marginBottom:"16px"}}><h1 style={{fontSize:"1.5rem",fontWeight:900,color:"#fff",margin:0}}>🌍 العوالم</h1><CoinBar/></div><div style={{width:"100%",maxWidth:"400px",display:"flex",flexDirection:"column",gap:"14px"}}>{WORLDS.map((w)=>{const wl=LEVELS.slice(w.from,w.to+1);const comp=wl.filter((_,i)=>w.from+i<unlockedLevels-1).length;const tot=wl.length;const lck=unlockedLevels<=w.from;const pct=Math.round(comp/tot*100);return(<div key={w.id} onClick={()=>!lck&&setScreen("levelSelect_"+w.id)} style={{background:lck?"rgba(255,255,255,0.04)":w.color,borderRadius:"18px",padding:"18px 20px",cursor:lck?"not-allowed":"pointer",opacity:lck?0.4:1}}><div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:"10px"}}><div style={{display:"flex",alignItems:"center",gap:"10px"}}><div style={{fontSize:"2rem"}}>{lck?"🔒":w.icon}</div><div><div style={{color:"#fff",fontWeight:900}}>العالم {w.id}</div><div style={{color:"rgba(255,255,255,0.8)",fontSize:"0.82rem"}}>{w.name}</div></div></div><div style={{color:"#fff",fontWeight:800}}>{comp}/{tot}</div></div><div style={{height:"8px",background:"rgba(0,0,0,0.2)",borderRadius:"99px",overflow:"hidden"}}><div style={{height:"100%",width:pct+"%",background:"rgba(255,255,255,0.7)",borderRadius:"99px"}}/></div></div>);})}</div><button onClick={handleLogout} style={{marginTop:"20px",background:"rgba(255,50,50,0.12)",border:"1px solid rgba(255,50,50,0.25)",borderRadius:"10px",padding:"8px 20px",color:"rgba(255,100,100,0.9)",cursor:"pointer"}}>خروج</button></div>
-);
-if(screen&&screen.startsWith("levelSelect_")){const wid=parseInt(screen.split("_")[1]);const w=WORLDS.find(x=>x.id===wid);const wlevels=LEVELS.slice(w.from,w.to+1);return(<div style={{minHeight:"100vh",background:w.color,fontFamily:"Segoe UI",display:"flex",flexDirection:"column",alignItems:"center",padding:"20px",overflowY:"auto"}}><style>{CSS}</style><div style={{display:"flex",alignItems:"center",justifyContent:"space-between",width:"100%",maxWidth:"400px",marginBottom:"16px"}}><button onClick={()=>setScreen("worldSelect")} style={{background:"rgba(0,0,0,0.2)",border:"none",borderRadius:"10px",padding:"8px 14px",color:"#fff",cursor:"pointer",fontSize:"1.2rem"}}>←</button><h2 style={{color:"#fff",fontWeight:900,margin:0,fontSize:"1.2rem"}}>{w.icon} {w.name}</h2><CoinBar/></div><div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:"10px",width:"100%",maxWidth:"400px"}}>{wlevels.map((l,i)=>{const idx=w.from+i;const locked=idx>=unlockedLevels;const done=idx<unlockedLevels-1;return(<div key={idx} className="lvbtn" onClick={()=>!locked&&startLevel(idx)} style={{background:locked?"rgba(0,0,0,0.2)":done?"rgba(0,0,0,0.3)":"rgba(255,255,255,0.25)",border:"1px solid rgba(255,255,255,0.3)",borderRadius:"14px",padding:"12px 6px",textAlign:"center",cursor:locked?"not-allowed":"pointer",opacity:locked?0.4:1}}><div style={{fontSize:"1.3rem",marginBottom:"3px"}}>{locked?"🔒":done?"✅":"▶️"}</div><div style={{color:"#fff",fontWeight:800,fontSize:"1rem"}}>{l.level}</div><div style={{color:"rgba(255,255,255,0.8)",fontSize:"0.58rem"}}>{l.moves} حركة</div><div style={{color:"rgba(255,255,255,0.6)",fontSize:"0.55rem"}}>{l.targetScore}⭐</div></div>);})}</div></div>);}
-// ==================== WORLD SELECT ====================
-  if(screen==="worldSelect")return(
-    <div style={{minHeight:"100vh",background:"linear-gradient(135deg,#1a0533 0%,#2d0a5e 50%,#1a0533 100%)",fontFamily:"'Segoe UI',sans-serif",display:"flex",flexDirection:"column",alignItems:"center",padding:"20px",overflowY:"auto"}}>
+// ==================== LEVEL SELECT (FIXED) ====================
+if (screen === "levelSelect") {
+  return (
+    <div style={{ minHeight: "100vh", background: "linear-gradient(135deg,#1a0533 0%,#2d0a5e 50%,#1a0533 100%)", fontFamily: "'Segoe UI',sans-serif", display: "flex", flexDirection: "column", alignItems: "center", padding: "20px" }}>
       <style>{CSS}</style>
 
-      {/* Daily popup */}
-      {showDailyPopup&&(
-        <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.75)",zIndex:300,display:"flex",alignItems:"center",justifyContent:"center",padding:"24px"}}>
-          <div className="daily-popup" style={{background:"linear-gradient(135deg,#2d0a5e,#1a0533)",border:"2px solid rgba(255,215,0,0.5)",borderRadius:"24px",padding:"36px 28px",maxWidth:"320px",width:"100%",textAlign:"center"}}>
-            <div style={{fontSize:"4rem",marginBottom:"8px"}}>🎁</div>
-            <h2 style={{color:"#FFD700",fontSize:"1.6rem",fontWeight:900,margin:"0 0 6px 0"}}>مكافأتك اليومية!</h2>
-            <p style={{color:"rgba(255,255,255,0.5)",fontSize:"0.85rem",margin:"0 0 20px 0"}}>ارجع كل يوم واحصل على عملات مجانية</p>
-            <div className="daily-glow" style={{background:"rgba(255,215,0,0.1)",border:"1px solid rgba(255,215,0,0.4)",borderRadius:"16px",padding:"18px",marginBottom:"22px"}}>
-              <div style={{color:"#FFD700",fontSize:"3rem",fontWeight:900}}>+{DAILY_REWARD}</div>
-              <div style={{color:"#FFD700",fontSize:"1rem",fontWeight:700}}>عملات ذهبية 🪙</div>
-            </div>
-            <button onClick={claimDaily} style={{width:"100%",background:"linear-gradient(135deg,#FFD700,#FF9800)",border:"none",borderRadius:"14px",padding:"14px",color:"#1a0533",fontSize:"1.1rem",fontWeight:900,cursor:"pointer"}}>🎉 استلم المكافأة</button>
+      {/* Header */}
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", width: "100%", maxWidth: "400px", marginBottom: "10px" }}>
+        <h1 style={{ fontSize: "1.5rem", fontWeight: 900, color: "#fff", margin: 0 }}>🛒 المراحل</h1>
+        <div style={{ display: "flex", gap: "6px", alignItems: "center" }}>
+          <CoinBar />
+        </div>
+      </div>
+
+      {/* User bar */}
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", width: "100%", maxWidth: "400px", background: "rgba(255,255,255,0.06)", borderRadius: "12px", padding: "8px 14px", marginBottom: "12px" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+          <div style={{ width: "32px", height: "32px", borderRadius: "50%", background: "linear-gradient(135deg,#FF6B9D,#A855F7)", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 800, color: "#fff" }}>
+            {loggedUser ? loggedUser[0].toUpperCase() : "U"}
+          </div>
+          <div style={{ color: "#fff", fontSize: "0.88rem" }}>
+            <b>{loggedUser}</b>
+            <div style={{ color: "rgba(255,255,255,0.4)", fontSize: "0.68rem" }}>مرحلة {unlockedLevels} من {LEVELS.length}</div>
           </div>
         </div>
+        <button onClick={() => setScreen("worldSelect")} style={{ background: "rgba(255,255,255,0.1)", border: "none", borderRadius: "8px", padding: "5px 12px", color: "#fff", cursor: "pointer" }}>العوالم</button>
+      </div>
+
+      {/* Grid with Scroll Fixed */}
+      <div style={{
+        display: "grid",
+        gridTemplateColumns: "repeat(3, 1fr)",
+        gap: "12px",
+        width: "100%",
+        maxWidth: "400px",
+        padding: "10px",
+        maxHeight: "70vh", 
+        overflowY: "auto",
+        paddingBottom: "50px"
+      }}>
+        {LEVELS.map((l, idx) => {
+          const locked = idx >= unlockedLevels;
+          const done = idx < unlockedLevels - 1;
+          return (
+            <div key={idx} className="lvbtn" onClick={() => !locked && startLevel(idx)} 
+              style={{ 
+                background: locked ? "rgba(255,255,255,0.04)" : done ? "linear-gradient(135deg,#10B981,#047857)" : "linear-gradient(135deg,#FF6B9D,#A855F7)", 
+                borderRadius: "14px", padding: "15px 5px", textAlign: "center", 
+                cursor: locked ? "not-allowed" : "pointer", opacity: locked ? 0.4 : 1,
+                border: "1px solid rgba(255,255,255,0.1)"
+              }}>
+              <div style={{ fontSize: "1.2rem" }}>{locked ? "🔒" : done ? "✅" : "▶️"}</div>
+              <div style={{ color: "#fff", fontWeight: 800 }}>{idx + 1}</div>
+              <div style={{ color: "rgba(255,255,255,0.6)", fontSize: "0.6rem" }}>{l.targetScore}⭐</div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
       )}
       {dailyCollected&&<div style={{position:"fixed",top:"16px",left:"50%",transform:"translateX(-50%)",zIndex:400,background:"linear-gradient(135deg,#FFD700,#FF9800)",borderRadius:"12px",padding:"10px 22px",color:"#1a0533",fontWeight:900,fontSize:"1rem",animation:"bounceIn 0.4s forwards",whiteSpace:"nowrap"}}>🎁 +{DAILY_REWARD}🪙 تم الاستلام!</div>}
 
