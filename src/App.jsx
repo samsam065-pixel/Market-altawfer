@@ -779,7 +779,7 @@ if(screen==="levelSelect")return(
         <div style={{color:"rgba(255,255,255,0.25)",fontSize:"0.68rem",marginBottom:"14px"}}>تكسب {COINS_PER_LEVEL}🪙 عند إكمال كل مرحلة</div>
         <div style={{display:"flex",gap:"10px",justifyContent:"center"}}>
           <button onClick={()=>startLevel(currentLevel)} style={{background:"linear-gradient(135deg,#FF6B9D,#A855F7)",border:"none",borderRadius:"14px",padding:"11px 20px",color:"#fff",fontSize:"0.95rem",fontWeight:700,cursor:"pointer"}}>🔄 مجدداً</button>
-          <button onClick={()=>setScreen("levelSelect")} style={{background:"rgba(255,255,255,0.1)",border:"1px solid rgba(255,255,255,0.2)",borderRadius:"14px",padding:"11px 20px",color:"rgba(255,255,255,0.8)",fontSize:"0.95rem",cursor:"pointer"}}>🗺️ المراحل</button>
+          <button onClick={()=>setScreen("worldSelect")} style={{background:"rgba(255,255,255,0.1)",border:"1px solid rgba(255,255,255,0.2)",borderRadius:"14px",padding:"11px 20px",color:"rgba(255,255,255,0.8)",fontSize:"0.95rem",cursor:"pointer"}}>🗺️ المراحل</button>
         </div>
       </div>
     </div>
