@@ -567,7 +567,7 @@ export default function App(){
 
   // ==================== LEVEL SELECT ====================
   if(screen==="levelSelect")return(
-    <div style={{minHeight:"100vh",background:"linear-gradient(135deg,#1a0533 0%,#2d0a5e 50%,#1a0533 100%)",fontFamily:"'Segoe UI',sans-serif",display:"flex",flexDirection:"column",alignItems:"center",padding:"20px",overflowY:"auto"}}>
+    <div style={{minHeight:"100vh",background:"linear-gradient(135deg,#1a0533 0%,#2d0a5e 50%,#1a0533 100%)",fontFamily:"'Segoe UI',sans-serif",display:"flex",flexDirection:"column",alignItems:"center",padding:"20px",overflowY:"auto",minHeight:"100vh"}}>
       <style>{CSS}</style>
 
       {/* Daily popup */}
