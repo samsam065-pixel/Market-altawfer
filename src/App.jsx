@@ -120,7 +120,7 @@ const LEVELS=[
   {level:12,targetScore:3300,moves:25,label:"تحدي التوفير 🔥"},
   {level:13,targetScore:3900,moves:25,label:"أسطورة السوق 🌠"},
   {level:14,targetScore:4600,moves:25,label:"الأستاذ الكبير 💎"},
-  {level:15,targetScore:5500,moves:25,label:"سيد Altawfer 🏅"}];
+  {level:15,targetScore:5500,moves:25,label:"سيد Altawfer 🏅"},
   {level:16,targetScore:6000,moves:25,label:"محترف التسوق 🔱"},
   {level:17,targetScore:7000,moves:25,label:"أمير السوق 👸"},
   {level:18,targetScore:7500,moves:25,label:"عملاق الأسواق 🦁"},
