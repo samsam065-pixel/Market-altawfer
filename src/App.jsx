@@ -168,6 +168,12 @@ const LEVELS=[
 {level:60,targetScore:165000,moves:18,label:"سيد Altawfer الأعظم 🏆"},
 ];
 const MOVES_PURCHASE_COST=13,MOVES_PURCHASE_AMOUNT=5,COINS_PER_LEVEL=5,DAILY_REWARD=5;
+const WORLDS=[
+  {id:1,name:"سوق البداية",icon:"🛒",color:"linear-gradient(135deg,#FF6B9D,#A855F7)",from:0,to:14},
+  {id:2,name:"مول التوفير",icon:"🏬",color:"linear-gradient(135deg,#3B82F6,#06B6D4)",from:15,to:29},
+  {id:3,name:"مستودع الخير",icon:"📦",color:"linear-gradient(135deg,#10B981,#047857)",from:30,to:44},
+  {id:4,name:"سوق الذهب",icon:"💰",color:"linear-gradient(135deg,#F59E0B,#D97706)",from:45,to:59},
+];
 const ADMIN_USER="admin"; // اسم مستخدم المشرف
 
 // ======= Daily helpers =======
@@ -250,7 +256,7 @@ export default function App(){
   const[loggedUser,setLoggedUser]=useState(null);
 
   // Game
-  const[screen,setScreen]=useState("levelSelect");
+  const[screen,setScreen]=useState("worldSelect");
   const[currentLevel,setCurrentLevel]=useState(0);
   const[board,setBoard]=useState(null);
   const[selected,setSelected]=useState(null);
@@ -354,7 +360,7 @@ export default function App(){
 
   const handleLogout=async()=>{
     await fbLogout();
-    setLoggedUser(null);setScreen("levelSelect");
+    setLoggedUser(null);setScreen("worldSelect");
     setUnlockedLevels(1);setCoins(0);setAuthError("");
   };
 
@@ -606,7 +612,10 @@ export default function App(){
   );
 
   // ==================== LEVEL SELECT ====================
-  if(screen==="levelSelect")return(
+  if(screen==="worldSelect")return(
+<div style={{minHeight:"100vh",background:"linear-gradient(135deg,#1a0533 0%,#2d0a5e 50%,#1a0533 100%)",fontFamily:"Segoe UI",display:"flex",flexDirection:"column",alignItems:"center",padding:"20px",overflowY:"auto"}}><style>{CSS}</style><div style={{display:"flex",alignItems:"center",justifyContent:"space-between",width:"100%",maxWidth:"400px",marginBottom:"16px"}}><h1 style={{fontSize:"1.5rem",fontWeight:900,color:"#fff",margin:0}}>🌍 العوالم</h1><CoinBar/></div><div style={{width:"100%",maxWidth:"400px",display:"flex",flexDirection:"column",gap:"14px"}}>{WORLDS.map((w)=>{const wl=LEVELS.slice(w.from,w.to+1);const comp=wl.filter((_,i)=>w.from+i<unlockedLevels-1).length;const tot=wl.length;const lck=unlockedLevels<=w.from;const pct=Math.round(comp/tot*100);return(<div key={w.id} onClick={()=>!lck&&setScreen("levelSelect_"+w.id)} style={{background:lck?"rgba(255,255,255,0.04)":w.color,borderRadius:"18px",padding:"18px 20px",cursor:lck?"not-allowed":"pointer",opacity:lck?0.4:1}}><div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:"10px"}}><div style={{display:"flex",alignItems:"center",gap:"10px"}}><div style={{fontSize:"2rem"}}>{lck?"🔒":w.icon}</div><div><div style={{color:"#fff",fontWeight:900}}>العالم {w.id}</div><div style={{color:"rgba(255,255,255,0.8)",fontSize:"0.82rem"}}>{w.name}</div></div></div><div style={{color:"#fff",fontWeight:800}}>{comp}/{tot}</div></div><div style={{height:"8px",background:"rgba(0,0,0,0.2)",borderRadius:"99px",overflow:"hidden"}}><div style={{height:"100%",width:pct+"%",background:"rgba(255,255,255,0.7)",borderRadius:"99px"}}/></div></div>);})}</div><button onClick={handleLogout} style={{marginTop:"20px",background:"rgba(255,50,50,0.12)",border:"1px solid rgba(255,50,50,0.25)",borderRadius:"10px",padding:"8px 20px",color:"rgba(255,100,100,0.9)",cursor:"pointer"}}>خروج</button></div>
+);
+if(screen==="levelSelect")return(
     <div style={{minHeight:"100vh",background:"linear-gradient(135deg,#1a0533 0%,#2d0a5e 50%,#1a0533 100%)",fontFamily:"'Segoe UI',sans-serif",display:"flex",flexDirection:"column",alignItems:"center",padding:"20px",overflowY:"auto",minHeight:"100vh"}}>
       <style>{CSS}</style>
 
