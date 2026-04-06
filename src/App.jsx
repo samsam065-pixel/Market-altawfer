@@ -177,6 +177,32 @@ const WORLDS = [
 const MOVES_PURCHASE_COST = 13, MOVES_PURCHASE_AMOUNT = 5, COINS_PER_LEVEL = 5, DAILY_REWARD = 5;
 const ADMIN_USER = "admin";
 
+// أسعار العملات
+const COIN_PACKS = [
+  { id: 1, coins: 100, priceSYP: 15000, priceUSD: 0.99, name: "باقة صغيرة" },
+  { id: 2, coins: 500, priceSYP: 65000, priceUSD: 3.99, name: "باقة متوسطة" },
+  { id: 3, coins: 1000, priceSYP: 120000, priceUSD: 6.99, name: "باقة كبيرة" },
+  { id: 4, coins: 5000, priceSYP: 550000, priceUSD: 29.99, name: "باقة خرافية" },
+];
+
+// طرق الدفع
+const PAYMENT_METHODS = [
+  { 
+    id: "syriatel_cash", 
+    name: "Syriatel Cash", 
+    icon: "📱", 
+    instructions: "أرسل المبلغ إلى الرقم أدناه مع كود الطلب",
+    phoneNumber: "09386673"
+  },
+  { 
+    id: "cwallet_trc20", 
+    name: "C-Wallet (USDT - TRC20)", 
+    icon: "💳", 
+    instructions: "أرسل USDT عبر شبكة TRC20 إلى العنوان أدناه",
+    walletAddress: "TNBPT27NjE4Q6eVRmpRCfKDMfnEYXmYkVS"
+  },
+];
+
 // NEWS TYPES
 const NEWS_TYPES = {
   sale: { bg: "linear-gradient(135deg,#FF4444,#CC0000)", icon: "🏷️", label: "عرض خاص", color: "#FF4444" },
@@ -321,6 +347,8 @@ const CSS = `
 @keyframes slideDown{from{opacity:0;transform:translateY(-30px)}to{opacity:1;transform:translateY(0)}}
 @keyframes glow{0%,100%{box-shadow:0 0 12px rgba(255,215,0,0.4)}50%{box-shadow:0 0 28px rgba(255,215,0,0.9)}}
 @keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+@keyframes ticker{0%{transform:translateX(100%)}100%{transform:translateX(-100%)}}
+@keyframes pulse{0%,100%{opacity:0.5}50%{opacity:1}}
 .cc{transition:transform 0.15s,box-shadow 0.15s;}.cc:hover{transform:scale(1.08);}
 .cc.sel{transform:scale(1.15);box-shadow:0 0 15px #fff,0 0 30px #fff;}
 .cc.mat{animation:pop 0.4s forwards;}
@@ -342,7 +370,7 @@ input:focus{outline:none;}
 .world-tab{transition:all 0.2s;}.world-tab.active{background:linear-gradient(135deg,#FF6B9D,#A855F7) !important;color:#fff !important;box-shadow:0 2px 8px rgba(168,85,247,0.4);}
 `;
 
-const BG = { minHeight: "100vh", background: "linear-gradient(135deg,#1a0533 0%,#2d0a5e 50%,#1a0533 100%)", fontFamily: "'Segoe UI',sans-serif" };
+const BG = { minHeight: "100vh", background: "linear-gradient(135deg,#0f0717 0%,#1a0b2e 50%,#0f0717 100%)", fontFamily: "'Segoe UI',sans-serif" };
 const inputStyle = { width: "100%", background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.2)", borderRadius: "12px", padding: "12px 16px", color: "#fff", fontSize: "1rem", boxSizing: "border-box", marginBottom: "12px" };
 const btnPrimary = { width: "100%", background: "linear-gradient(135deg,#FF6B9D,#A855F7)", border: "none", borderRadius: "12px", padding: "13px", color: "#fff", fontSize: "1rem", fontWeight: 800, cursor: "pointer", marginBottom: "10px" };
 
@@ -411,6 +439,11 @@ export default function App() {
     expiresIn: 7
   });
   const [newsLoading, setNewsLoading] = useState(false);
+
+  // SHOP STATES
+  const [showShop, setShowShop] = useState(false);
+  const [selectedPack, setSelectedPack] = useState(null);
+  const [paymentMethod, setPaymentMethod] = useState(null);
 
   const lv = LEVELS[currentLevel];
 
@@ -528,6 +561,60 @@ export default function App() {
     }
     
     setNewsLoading(false);
+  };
+
+  // SHOP FUNCTIONS
+  const initiatePayment = (pack, method) => {
+    const orderId = `ORD-${Date.now()}-${Math.floor(Math.random() * 10000)}`;
+    
+    const orders = JSON.parse(localStorage.getItem("pending_orders") || "[]");
+    orders.push({ 
+      id: orderId, 
+      userId: loggedUser, 
+      coins: pack.coins, 
+      amount: method.id === "syriatel_cash" ? pack.priceSYP : pack.priceUSD,
+      currency: method.id === "syriatel_cash" ? "SYP" : "USDT",
+      method: method.id, 
+      status: "pending", 
+      date: new Date().toISOString() 
+    });
+    localStorage.setItem("pending_orders", JSON.stringify(orders));
+    
+    const message = `🛒 طلب شراء عملات جديد
+
+👤 اسم المستخدم: ${loggedUser}
+📋 كود الطلب: ${orderId}
+💰 الكمية: ${pack.coins} عملة
+💵 المبلغ: ${method.id === "syriatel_cash" ? pack.priceSYP.toLocaleString() + " ليرة سورية" : pack.priceUSD + " USDT"}
+📱 طريقة الدفع: ${method.id === "syriatel_cash" ? "Syriatel Cash (" + method.phoneNumber + ")" : "C-Wallet TRC20"}
+
+📸 الرجاء إرفاق صورة إثبات الدفع مع هذا الطلب
+
+🔗 رابط اللعبة: https://samsam065-pixel.github.io/Market-altawfer`;
+    
+    const telegramUsername = "altawfer_market";
+    window.open(`https://t.me/${telegramUsername}?text=${encodeURIComponent(message)}`, "_blank");
+    
+    alert(`✅ تم إنشاء الطلب!\n\n📋 كود الطلب: ${orderId}\n💬 سيتم فتح تيليغرام\n📸 أرفق صورة الإيصال مع اسم المستخدم: ${loggedUser}\n\n⏳ بعد التأكيد، سيتم إضافة العملات تلقائياً`);
+    
+    setShowShop(false);
+    setSelectedPack(null);
+    setPaymentMethod(null);
+  };
+
+  const confirmOrderManually = async (order, orders, setOrders) => {
+    const updatedOrders = orders.map(o => 
+      o.id === order.id ? { ...o, status: "completed" } : o
+    );
+    localStorage.setItem("pending_orders", JSON.stringify(updatedOrders));
+    
+    const newCoins = coins + order.coins;
+    setCoins(newCoins);
+    await saveToCloud({ coins: newCoins });
+    
+    playWin();
+    alert(`✅ تم تأكيد الطلب!\n🪙 تم إضافة ${order.coins} عملة للمستخدم ${order.userId}`);
+    window.location.reload();
   };
 
   useEffect(() => {
@@ -795,9 +882,51 @@ export default function App() {
   const isHint = (r, c) => hintCells && hintCells.some(([hr, hc]) => hr === r && hc === c);
   const progress = lv ? Math.min(100, Math.round((score / lv.targetScore) * 100)) : 0;
 
-  const CoinBar = () => (
-    <div style={{ display: "flex", alignItems: "center", gap: "6px", background: "rgba(255,215,0,0.12)", border: "1px solid rgba(255,215,0,0.35)", borderRadius: "20px", padding: "4px 12px", fontSize: "0.85rem", fontWeight: 800, color: "#FFD700" }}>
-      🪙 {coins}
+  // تبويب واحد مدمج: رصيد العملات + زر الدفع + دولاب الحظ
+  const ActionBar = () => (
+    <div style={{
+      display: "flex",
+      alignItems: "center",
+      gap: "8px",
+      background: "linear-gradient(135deg,rgba(255,215,0,0.2),rgba(255,152,0,0.1))",
+      border: "1px solid rgba(255,215,0,0.4)",
+      borderRadius: "60px",
+      padding: "6px 12px",
+      backdropFilter: "blur(10px)"
+    }}>
+      <span style={{ fontSize: "1.1rem" }}>🪙</span>
+      <span style={{ fontWeight: 800, color: "#FFD700", fontSize: "0.9rem" }}>{coins}</span>
+      <button 
+        onClick={() => setShowShop(true)}
+        style={{
+          background: "linear-gradient(135deg,#10B981,#047857)",
+          border: "none",
+          borderRadius: "30px",
+          padding: "5px 12px",
+          color: "#fff",
+          fontSize: "0.7rem",
+          fontWeight: 700,
+          cursor: "pointer"
+        }}
+      >
+        ➕ شراء
+      </button>
+      <div style={{ width: "1px", height: "20px", background: "rgba(255,255,255,0.3)" }} />
+      <button 
+        onClick={() => setShowLuckyWheel(true)}
+        style={{
+          background: "linear-gradient(135deg,#FFD700,#FF9800)",
+          border: "none",
+          borderRadius: "30px",
+          padding: "5px 12px",
+          color: "#1a0533",
+          fontSize: "0.7rem",
+          fontWeight: 700,
+          cursor: "pointer"
+        }}
+      >
+        🎡 دولاب
+      </button>
     </div>
   );
 
@@ -834,6 +963,9 @@ export default function App() {
 
   // ADMIN DASHBOARD
   if (showAdmin && loggedUser === ADMIN_USER) {
+    const orders = JSON.parse(localStorage.getItem("pending_orders") || "[]");
+    const pendingOrders = orders.filter(o => o.status === "pending");
+    
     return (
       <div style={{ ...BG, minHeight: "100vh", overflowY: "auto", padding: "0" }}>
         <style>{CSS}</style>
@@ -844,86 +976,470 @@ export default function App() {
           </div>
           <button onClick={() => setShowAdmin(false)} style={{ background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.15)", borderRadius: "8px", padding: "6px 14px", color: "rgba(255,255,255,0.7)", fontSize: "0.82rem", cursor: "pointer" }}>← رجوع</button>
         </div>
-        {adminLoading ? <div style={{ textAlign: "center", padding: "60px", color: "rgba(255,255,255,0.4)" }}>⏳ جاري التحميل...</div> : (() => {
-          const totalPlayers = adminData.length;
-          const completedAll = adminData.filter(p => (p.unlockedLevels || 1) > 20).length;
-          const totalCoins = adminData.reduce((s, p) => s + (p.coins || 0), 0);
-          const avgLevel = totalPlayers ? Math.round(adminData.reduce((s, p) => s + (p.unlockedLevels || 1), 0) / totalPlayers) : 0;
-          return (
-            <div style={{ padding: "16px 20px" }}>
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(2,1fr)", gap: "10px", marginBottom: "20px" }}>
-                {[
-                  { label: "إجمالي اللاعبين", value: totalPlayers, icon: "👥", color: "#A855F7" },
-                  { label: "أكملوا كل المراحل", value: completedAll, icon: "🏅", color: "#FFD700" },
-                  { label: "متوسط المرحلة", value: `M${avgLevel}`, icon: "📊", color: "#60a5fa" },
-                  { label: "إجمالي العملات", value: totalCoins.toLocaleString(), icon: "🪙", color: "#10B981" },
-                ].map(s => (
-                  <div key={s.label} style={{ background: "rgba(255,255,255,0.05)", border: `1px solid ${s.color}33`, borderRadius: "14px", padding: "14px", textAlign: "center" }}>
-                    <div style={{ fontSize: "1.6rem", marginBottom: "4px" }}>{s.icon}</div>
-                    <div style={{ color: s.color, fontWeight: 900, fontSize: "1.3rem" }}>{s.value}</div>
-                    <div style={{ color: "rgba(255,255,255,0.4)", fontSize: "0.65rem", marginTop: "2px" }}>{s.label}</div>
-                  </div>
-                ))}
+        {adminLoading ? <div style={{ textAlign: "center", padding: "60px", color: "rgba(255,255,255,0.4)" }}>⏳ جاري التحميل...</div> : (
+          <div style={{ padding: "16px 20px" }}>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(2,1fr)", gap: "10px", marginBottom: "20px" }}>
+              <div style={{ background: "rgba(255,255,255,0.05)", borderRadius: "14px", padding: "14px", textAlign: "center" }}>
+                <div style={{ fontSize: "1.6rem" }}>👥</div>
+                <div style={{ color: "#A855F7", fontWeight: 900, fontSize: "1.3rem" }}>{adminData.length}</div>
+                <div style={{ color: "rgba(255,255,255,0.4)", fontSize: "0.65rem" }}>إجمالي اللاعبين</div>
               </div>
-              <div style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "14px", padding: "14px", marginBottom: "16px" }}>
-                <div style={{ color: "rgba(255,255,255,0.6)", fontSize: "0.78rem", marginBottom: "10px", fontWeight: 700 }}>📈 توزيع اللاعبين على المراحل</div>
-                {Array.from({ length: Math.min(LEVELS.length, 60) }, (_, i) => {
-                  const count = adminData.filter(p => (p.unlockedLevels || 1) === i + 1).length;
-                  const pct = totalPlayers ? Math.round(count / totalPlayers * 100) : 0;
-                  return (
-                    <div key={i} style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "5px" }}>
-                      <div style={{ color: "rgba(255,255,255,0.4)", fontSize: "0.65rem", minWidth: "24px", textAlign: "right" }}>M{i + 1}</div>
-                      <div style={{ flex: 1, height: "10px", background: "rgba(255,255,255,0.06)", borderRadius: "5px", overflow: "hidden" }}>
-                        <div style={{ height: "100%", width: `${pct}%`, background: "linear-gradient(90deg,#FF6B9D,#A855F7)", borderRadius: "5px", transition: "width 0.4s" }} />
-                      </div>
-                      <div style={{ color: "rgba(255,255,255,0.5)", fontSize: "0.65rem", minWidth: "28px" }}>{count}</div>
-                    </div>
-                  );
-                })}
+              <div style={{ background: "rgba(255,255,255,0.05)", borderRadius: "14px", padding: "14px", textAlign: "center" }}>
+                <div style={{ fontSize: "1.6rem" }}>📋</div>
+                <div style={{ color: "#FFD700", fontWeight: 900, fontSize: "1.3rem" }}>{pendingOrders.length}</div>
+                <div style={{ color: "rgba(255,255,255,0.4)", fontSize: "0.65rem" }}>طلبات معلقة</div>
               </div>
-              <div style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "14px", overflow: "hidden" }}>
-                <div style={{ padding: "12px 16px", borderBottom: "1px solid rgba(255,255,255,0.06)", color: "rgba(255,255,255,0.5)", fontSize: "0.72rem", display: "grid", gridTemplateColumns: "2fr 1fr 1fr 1fr", gap: "8px", fontWeight: 700 }}>
-                  <span>اللاعب</span><span style={{ textAlign: "center" }}>المرحلة</span><span style={{ textAlign: "center" }}>أفضل نقطة</span><span style={{ textAlign: "center" }}>عملات</span>
-                </div>
-                {adminData.map((p, i) => (
-                  <div key={p.id} style={{ padding: "10px 16px", borderBottom: "1px solid rgba(255,255,255,0.04)", display: "grid", gridTemplateColumns: "2fr 1fr 1fr 1fr", gap: "8px", alignItems: "center", background: i % 2 === 0 ? "transparent" : "rgba(255,255,255,0.02)" }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                      <div style={{ width: "28px", height: "28px", borderRadius: "50%", background: "linear-gradient(135deg,#FF6B9D,#A855F7)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "0.78rem", fontWeight: 800, color: "#fff", flexShrink: 0 }}>
-                        {(p.username || p.id)[0].toUpperCase()}
-                      </div>
-                      <div>
-                        <div style={{ color: "#fff", fontSize: "0.82rem", fontWeight: 600 }}>{p.username || p.id}</div>
-                        <div style={{ color: "rgba(255,255,255,0.25)", fontSize: "0.6rem" }}>{p.createdAt ? new Date(p.createdAt).toLocaleDateString("ar") : "—"}</div>
-                      </div>
-                    </div>
-                    <div style={{ textAlign: "center", color: "#A855F7", fontWeight: 800, fontSize: "0.88rem" }}>M{Math.min(p.unlockedLevels || 1, 20)}</div>
-                    <div style={{ textAlign: "center", color: "#FFD700", fontSize: "0.82rem" }}>{(p.bestScore || 0).toLocaleString()}</div>
-                    <div style={{ textAlign: "center", color: "#10B981", fontSize: "0.82rem" }}>🪙{p.coins || 0}</div>
-                  </div>
-                ))}
-              </div>
-              <button onClick={openAdmin} style={{ marginTop: "12px", width: "100%", background: "rgba(168,85,247,0.15)", border: "1px solid rgba(168,85,247,0.3)", borderRadius: "10px", padding: "10px", color: "#A855F7", fontSize: "0.85rem", cursor: "pointer", fontWeight: 700 }}>
-                🔄 تحديث البيانات
-              </button>
             </div>
-          );
-        })()}
+            
+            <div style={{ background: "rgba(0,0,0,0.3)", borderRadius: "12px", padding: "15px", marginBottom: "20px" }}>
+              <h3 style={{ color: "#FFD700", marginBottom: "15px" }}>📋 طلبات الشراء المعلقة</h3>
+              {pendingOrders.length === 0 ? (
+                <p style={{ color: "rgba(255,255,255,0.4)" }}>لا توجد طلبات معلقة</p>
+              ) : (
+                pendingOrders.map(order => (
+                  <div key={order.id} style={{ background: "rgba(255,255,255,0.05)", borderRadius: "10px", padding: "12px", marginBottom: "10px", borderLeft: "3px solid #FFD700" }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap" }}>
+                      <div>
+                        <p style={{ color: "#fff", margin: "3px 0" }}><strong>👤 المستخدم:</strong> {order.userId}</p>
+                        <p style={{ color: "#fff", margin: "3px 0" }}><strong>📋 الكود:</strong> {order.id}</p>
+                        <p style={{ color: "#fff", margin: "3px 0" }}><strong>🪙 العملات:</strong> {order.coins}</p>
+                        <p style={{ color: "#FFD700", margin: "3px 0" }}><strong>💰 المبلغ:</strong> {order.amount} {order.currency}</p>
+                        <p style={{ color: "rgba(255,255,255,0.5)", margin: "3px 0", fontSize: "0.7rem" }}><strong>📅 التاريخ:</strong> {new Date(order.date).toLocaleString()}</p>
+                      </div>
+                      <div style={{ display: "flex", flexDirection: "column", gap: "5px" }}>
+                        <button 
+                          onClick={() => confirmOrderManually(order, orders, null)}
+                          style={{
+                            background: "linear-gradient(135deg,#10B981,#047857)",
+                            border: "none",
+                            borderRadius: "8px",
+                            padding: "8px 16px",
+                            color: "#fff",
+                            cursor: "pointer",
+                            fontWeight: "bold"
+                          }}
+                        >
+                          ✅ تأكيد الدفع
+                        </button>
+                        <button 
+                          onClick={() => window.open(`https://t.me/altawfer_market?text=طلب%20رقم%20${order.id}%20من%20المستخدم%20${order.userId}`, "_blank")}
+                          style={{
+                            background: "linear-gradient(135deg,#0088cc,#006699)",
+                            border: "none",
+                            borderRadius: "8px",
+                            padding: "8px 16px",
+                            color: "#fff",
+                            cursor: "pointer"
+                          }}
+                        >
+                          💬 مراسلة المستخدم
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+            
+            <div style={{ background: "rgba(255,255,255,0.04)", borderRadius: "14px", overflow: "hidden" }}>
+              <div style={{ padding: "12px 16px", borderBottom: "1px solid rgba(255,255,255,0.06)", color: "rgba(255,255,255,0.5)", fontSize: "0.72rem", display: "grid", gridTemplateColumns: "2fr 1fr 1fr 1fr", gap: "8px", fontWeight: 700 }}>
+                <span>اللاعب</span><span style={{ textAlign: "center" }}>المرحلة</span><span style={{ textAlign: "center" }}>أفضل نقطة</span><span style={{ textAlign: "center" }}>عملات</span>
+              </div>
+              {adminData.slice(0, 20).map((p, i) => (
+                <div key={p.id} style={{ padding: "10px 16px", borderBottom: "1px solid rgba(255,255,255,0.04)", display: "grid", gridTemplateColumns: "2fr 1fr 1fr 1fr", gap: "8px", alignItems: "center", background: i % 2 === 0 ? "transparent" : "rgba(255,255,255,0.02)" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                    <div style={{ width: "28px", height: "28px", borderRadius: "50%", background: "linear-gradient(135deg,#FF6B9D,#A855F7)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "0.78rem", fontWeight: 800, color: "#fff" }}>
+                      {(p.username || p.id)[0].toUpperCase()}
+                    </div>
+                    <div>
+                      <div style={{ color: "#fff", fontSize: "0.82rem", fontWeight: 600 }}>{p.username || p.id}</div>
+                      <div style={{ color: "rgba(255,255,255,0.25)", fontSize: "0.6rem" }}>{p.createdAt ? new Date(p.createdAt).toLocaleDateString("ar") : "—"}</div>
+                    </div>
+                  </div>
+                  <div style={{ textAlign: "center", color: "#A855F7", fontWeight: 800, fontSize: "0.88rem" }}>M{Math.min(p.unlockedLevels || 1, 60)}</div>
+                  <div style={{ textAlign: "center", color: "#FFD700", fontSize: "0.82rem" }}>{(p.bestScore || 0).toLocaleString()}</div>
+                  <div style={{ textAlign: "center", color: "#10B981", fontSize: "0.82rem" }}>🪙{p.coins || 0}</div>
+                </div>
+              ))}
+            </div>
+            <button onClick={openAdmin} style={{ marginTop: "12px", width: "100%", background: "rgba(168,85,247,0.15)", border: "1px solid rgba(168,85,247,0.3)", borderRadius: "10px", padding: "10px", color: "#A855F7", fontSize: "0.85rem", cursor: "pointer", fontWeight: 700 }}>
+              🔄 تحديث البيانات
+            </button>
+          </div>
+        )}
       </div>
     );
   }
 
-  // LEVEL SELECT SCREEN
+  // LEVEL SELECT SCREEN - نسخة ديناميكية مع ActionBar
   if (screen === "levelSelect") {
     const currentWorld = WORLDS[selectedWorld];
     const worldLevels = LEVELS.slice(currentWorld.startLevel, currentWorld.endLevel + 1);
     const completedInWorld = worldLevels.filter((_, idx) => currentWorld.startLevel + idx < unlockedLevels - 1).length;
     const randomNewsForToday = newsList.length > 0 ? newsList[Math.floor(Math.random() * newsList.length)] : null;
 
+    const totalProgress = (unlockedLevels - 1) / LEVELS.length * 100;
+
     return (
-      <div style={{ minHeight: "100vh", background: "linear-gradient(135deg,#1a0533 0%,#2d0a5e 50%,#1a0533 100%)", fontFamily: "'Segoe UI',sans-serif", display: "flex", flexDirection: "column", alignItems: "center", padding: "20px", overflowY: "auto" }}>
+      <div style={{ 
+        minHeight: "100vh", 
+        background: "linear-gradient(135deg,#0f0717 0%,#1a0b2e 50%,#0f0717 100%)", 
+        fontFamily: "'Segoe UI',sans-serif", 
+        display: "flex", 
+        flexDirection: "column", 
+        alignItems: "center", 
+        padding: "16px", 
+        overflowY: "auto",
+        position: "relative"
+      }}>
         <style>{CSS}</style>
         
-        {/* Daily popup */}
+        <div style={{
+          position: "fixed",
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: "radial-gradient(circle at 50% 50%, rgba(168,85,247,0.15) 0%, transparent 70%)",
+          pointerEvents: "none",
+          animation: "pulse 4s ease-in-out infinite"
+        }} />
+        
+        <div style={{
+          width: "100%",
+          maxWidth: "450px",
+          background: "rgba(255,255,255,0.05)",
+          backdropFilter: "blur(20px)",
+          borderRadius: "32px",
+          padding: "16px 20px",
+          marginBottom: "16px",
+          border: "1px solid rgba(255,255,255,0.1)",
+          boxShadow: "0 8px 32px rgba(0,0,0,0.3)"
+        }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "12px" }}>
+            <div>
+              <h1 style={{ 
+                fontSize: "1.6rem", 
+                fontWeight: 900, 
+                background: "linear-gradient(135deg,#FF6B9D,#A855F7,#60a5fa)",
+                WebkitBackgroundClip: "text",
+                WebkitTextFillColor: "transparent",
+                margin: 0,
+                letterSpacing: "-0.5px"
+              }}>🛒 Market Altawfer</h1>
+              <p style={{ color: "rgba(255,255,255,0.4)", fontSize: "0.65rem", margin: "4px 0 0 0" }}>
+                {loggedUser} • المستوى {Math.min(unlockedLevels, 60)}/{LEVELS.length}
+              </p>
+            </div>
+            <ActionBar />
+          </div>
+          
+          <div style={{ marginTop: "8px" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.65rem", color: "rgba(255,255,255,0.5)", marginBottom: "4px" }}>
+              <span>🏆 تقدم اللعبة</span>
+              <span>{Math.round(totalProgress)}%</span>
+            </div>
+            <div style={{ height: "6px", background: "rgba(255,255,255,0.1)", borderRadius: "10px", overflow: "hidden" }}>
+              <div style={{ 
+                width: `${totalProgress}%`, 
+                height: "100%", 
+                background: "linear-gradient(90deg,#FF6B9D,#A855F7,#60a5fa)",
+                borderRadius: "10px",
+                animation: "glow 2s ease-in-out infinite"
+              }} />
+            </div>
+          </div>
+        </div>
+        
+        <div style={{
+          width: "100%",
+          maxWidth: "450px",
+          background: "linear-gradient(135deg,rgba(168,85,247,0.2),rgba(255,107,157,0.1))",
+          borderRadius: "24px",
+          padding: "14px 18px",
+          marginBottom: "12px",
+          border: "1px solid rgba(168,85,247,0.3)",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between"
+        }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+            <div style={{
+              width: "50px",
+              height: "50px",
+              borderRadius: "25px",
+              background: "linear-gradient(135deg,#FF6B9D,#A855F7)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              fontSize: "1.4rem",
+              fontWeight: 800,
+              color: "#fff",
+              boxShadow: "0 4px 15px rgba(168,85,247,0.4)"
+            }}>
+              {loggedUser[0].toUpperCase()}
+            </div>
+            <div>
+              <div style={{ color: "#fff", fontWeight: 700, fontSize: "1rem" }}>{loggedUser}</div>
+              <div style={{ display: "flex", gap: "12px", marginTop: "4px" }}>
+                <span style={{ fontSize: "0.7rem", color: "#FFD700" }}>🪙 {coins}</span>
+                <span style={{ fontSize: "0.7rem", color: "#60a5fa" }}>⭐ {Math.min(unlockedLevels, 60)}</span>
+              </div>
+            </div>
+          </div>
+          <button onClick={handleLogout} style={{
+            background: "rgba(255,50,50,0.15)",
+            border: "1px solid rgba(255,50,50,0.3)",
+            borderRadius: "12px",
+            padding: "8px 16px",
+            color: "#FF8888",
+            fontSize: "0.75rem",
+            cursor: "pointer"
+          }}>🚪 خروج</button>
+        </div>
+        
+        <div style={{
+          width: "100%",
+          maxWidth: "450px",
+          display: "grid",
+          gridTemplateColumns: "repeat(3, 1fr)",
+          gap: "8px",
+          marginBottom: "16px"
+        }}>
+          {[
+            { icon: "🏆", label: "المتصدرين", action: openLeaderboard, color: "#FFD700", bg: "rgba(255,215,0,0.15)" },
+            { icon: "📰", label: "الأخبار", action: () => setShowNewsPanel(true), color: "#00BCD4", bg: "rgba(0,188,212,0.15)" },
+            { icon: "⚙️", label: "الإدارة", action: openAdmin, color: "#A855F7", bg: "rgba(168,85,247,0.15)", adminOnly: true }
+          ].filter(btn => !btn.adminOnly || loggedUser === ADMIN_USER).map(btn => (
+            <button key={btn.label} onClick={btn.action} style={{
+              background: btn.bg,
+              border: `1px solid ${btn.color}40`,
+              borderRadius: "16px",
+              padding: "10px 8px",
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              gap: "4px",
+              cursor: "pointer",
+              backdropFilter: "blur(10px)"
+            }}>
+              <span style={{ fontSize: "1.3rem" }}>{btn.icon}</span>
+              <span style={{ fontSize: "0.7rem", color: btn.color }}>{btn.label}</span>
+            </button>
+          ))}
+        </div>
+        
+        <div style={{ width: "100%", maxWidth: "450px", marginBottom: "12px" }}>
+          {dailyAvailable ? (
+            <button onClick={() => setShowDailyPopup(true)} style={{
+              width: "100%",
+              background: "linear-gradient(135deg,rgba(255,215,0,0.2),rgba(255,152,0,0.1))",
+              border: "2px solid rgba(255,215,0,0.5)",
+              borderRadius: "20px",
+              padding: "14px 18px",
+              cursor: "pointer",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between"
+            }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                <div style={{ fontSize: "2rem", animation: "glow 1.5s infinite" }}>🎁</div>
+                <div style={{ textAlign: "right" }}>
+                  <div style={{ color: "#FFD700", fontWeight: 800, fontSize: "0.9rem" }}>مكافأتك اليومية جاهزة!</div>
+                  <div style={{ color: "rgba(255,255,255,0.5)", fontSize: "0.7rem" }}>استلم {DAILY_REWARD}🪙 مجاناً</div>
+                </div>
+              </div>
+              <div style={{ background: "linear-gradient(135deg,#FFD700,#FF9800)", borderRadius: "12px", padding: "6px 14px", color: "#1a0533", fontWeight: 900, fontSize: "0.8rem" }}>استلم</div>
+            </button>
+          ) : (
+            <div style={{
+              width: "100%",
+              background: "rgba(255,255,255,0.03)",
+              border: "1px solid rgba(255,255,255,0.08)",
+              borderRadius: "20px",
+              padding: "12px 18px",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between"
+            }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                <div style={{ fontSize: "1.6rem", opacity: 0.3 }}>🎁</div>
+                <div>
+                  <div style={{ color: "rgba(255,255,255,0.3)", fontWeight: 700, fontSize: "0.8rem" }}>المكافأة اليومية</div>
+                  <div style={{ color: "rgba(255,255,255,0.15)", fontSize: "0.65rem" }}>تعود بعد {timeUntilNextDaily()}</div>
+                </div>
+              </div>
+              <div style={{ color: "rgba(255,255,255,0.15)", fontSize: "0.7rem" }}>✓ تم</div>
+            </div>
+          )}
+        </div>
+        
+        {newsList.length > 0 && (
+          <div onClick={() => setShowNewsPanel(true)} style={{
+            width: "100%",
+            maxWidth: "450px",
+            background: "rgba(0,0,0,0.5)",
+            borderRadius: "16px",
+            padding: "10px 0",
+            marginBottom: "16px",
+            overflow: "hidden",
+            border: "1px solid rgba(255,215,0,0.3)",
+            backdropFilter: "blur(10px)",
+            cursor: "pointer"
+          }}>
+            <div style={{
+              display: "inline-block",
+              whiteSpace: "nowrap",
+              animation: "ticker 25s linear infinite",
+              paddingRight: "20px"
+            }}>
+              {[...newsList, ...newsList].map((news, idx) => (
+                <span key={idx} style={{ display: "inline-block", marginLeft: "40px" }}>
+                  <span style={{
+                    background: NEWS_TYPES[news.type]?.bg || "linear-gradient(135deg,#FF6B9D,#A855F7)",
+                    borderRadius: "20px",
+                    padding: "3px 10px",
+                    fontSize: "0.65rem",
+                    fontWeight: 700,
+                    marginLeft: "8px",
+                    display: "inline-block",
+                    color: "#fff"
+                  }}>
+                    {NEWS_TYPES[news.type]?.icon} {NEWS_TYPES[news.type]?.label}
+                  </span>
+                  <span style={{ fontSize: "0.9rem", marginLeft: "6px", color: "#FFD700" }}>{news.icon}</span>
+                  <span style={{ fontSize: "0.8rem", marginLeft: "4px", color: "#fff" }}>{news.title}</span>
+                  <span style={{ fontSize: "0.7rem", marginLeft: "6px", color: "rgba(255,255,255,0.5)" }}>- {news.content.substring(0, 30)}...</span>
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
+        
+        <div style={{ display: "flex", gap: "8px", marginBottom: "20px", overflowX: "auto", width: "100%", maxWidth: "450px", paddingBottom: "4px" }}>
+          {WORLDS.map((world, idx) => {
+            const worldLevelsCount = world.endLevel - world.startLevel + 1;
+            const completed = LEVELS.slice(world.startLevel, world.endLevel + 1).filter((_, i) => world.startLevel + i < unlockedLevels - 1).length;
+            const isActive = selectedWorld === idx;
+            return (
+              <button
+                key={world.id}
+                onClick={() => setSelectedWorld(idx)}
+                style={{
+                  flex: 1,
+                  padding: "10px 8px",
+                  borderRadius: "20px",
+                  background: isActive ? world.color : "rgba(255,255,255,0.05)",
+                  border: isActive ? "none" : "1px solid rgba(255,255,255,0.1)",
+                  color: isActive ? "#fff" : "rgba(255,255,255,0.6)",
+                  fontSize: "0.75rem",
+                  fontWeight: isActive ? 700 : 500,
+                  cursor: "pointer",
+                  transition: "all 0.3s",
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  gap: "4px",
+                  transform: isActive ? "scale(1.02)" : "scale(1)"
+                }}
+              >
+                <span style={{ fontSize: "1.2rem" }}>{world.icon}</span>
+                <span>{world.name.split(" ")[1] || world.name}</span>
+                <span style={{ fontSize: "0.6rem", opacity: 0.7 }}>{completed}/{worldLevelsCount}</span>
+              </button>
+            );
+          })}
+        </div>
+        
+        <div style={{
+          width: "100%",
+          maxWidth: "450px",
+          background: currentWorld.color,
+          borderRadius: "24px",
+          padding: "20px",
+          marginBottom: "20px",
+          textAlign: "center",
+          position: "relative",
+          overflow: "hidden",
+          boxShadow: "0 8px 32px rgba(0,0,0,0.3)"
+        }}>
+          <div style={{
+            position: "absolute",
+            top: -20,
+            right: -20,
+            width: "100px",
+            height: "100px",
+            background: "rgba(255,255,255,0.1)",
+            borderRadius: "50%"
+          }} />
+          <div style={{ fontSize: "2.5rem", marginBottom: "8px", position: "relative" }}>{currentWorld.icon}</div>
+          <div style={{ color: "#fff", fontWeight: 900, fontSize: "1.2rem", marginBottom: "4px" }}>{currentWorld.name}</div>
+          <div style={{ color: "rgba(255,255,255,0.9)", fontSize: "0.75rem", marginBottom: "8px" }}>
+            أكملت {completedInWorld} من {worldLevels.length} مرحلة
+          </div>
+          <div style={{ height: "8px", background: "rgba(0,0,0,0.3)", borderRadius: "99px", overflow: "hidden" }}>
+            <div style={{
+              height: "100%",
+              width: `${(completedInWorld / worldLevels.length) * 100}%`,
+              background: "rgba(255,255,255,0.9)",
+              borderRadius: "99px",
+              transition: "width 0.5s"
+            }} />
+          </div>
+        </div>
+        
+        <div style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(3, 1fr)",
+          gap: "14px",
+          width: "100%",
+          maxWidth: "450px",
+          padding: "8px",
+          marginBottom: "20px"
+        }}>
+          {worldLevels.map((level, idx) => {
+            const globalIdx = currentWorld.startLevel + idx;
+            const locked = globalIdx >= unlockedLevels;
+            const done = globalIdx < unlockedLevels - 1;
+            return (
+              <div
+                key={globalIdx}
+                onClick={() => !locked && startLevel(globalIdx)}
+                style={{
+                  background: locked ? "rgba(255,255,255,0.03)" : done ? "linear-gradient(135deg,#10B981,#047857)" : "linear-gradient(135deg,#FF6B9D,#A855F7)",
+                  border: locked ? "1px solid rgba(255,255,255,0.05)" : "1px solid rgba(255,255,255,0.2)",
+                  borderRadius: "20px",
+                  padding: "14px 6px",
+                  textAlign: "center",
+                  cursor: locked ? "not-allowed" : "pointer",
+                  opacity: locked ? 0.4 : 1,
+                  transform: locked ? "none" : "scale(1)",
+                  transition: "all 0.2s",
+                  boxShadow: locked ? "none" : "0 4px 15px rgba(168,85,247,0.3)",
+                  position: "relative",
+                  overflow: "hidden"
+                }}
+              >
+                {!locked && !done && (
+                  <div style={{
+                    position: "absolute",
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    background: "radial-gradient(circle, rgba(255,255,255,0.2) 0%, transparent 70%)",
+                    pointerEvents: "none"
+                  }} />
+                )}
+                <div style={{ fontSize: "1.4rem", marginBottom: "4px" }}>{locked ? "🔒" : done ? "✅" : "▶️"}</div>
+                <div style={{ color: "#fff", fontWeight: 800, fontSize: "1rem" }}>{level.level}</div>
+                <div style={{ color: "rgba(255,255,255,0.6)", fontSize: "0.55rem", marginTop: "4px" }}>{level.moves} حركة</div>
+                <div style={{ color: "rgba(255,255,255,0.5)", fontSize: "0.5rem" }}>{level.targetScore}⭐</div>
+              </div>
+            );
+          })}
+        </div>
+        
         {showDailyPopup && (
           <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.75)", zIndex: 300, display: "flex", alignItems: "center", justifyContent: "center", padding: "24px" }}>
             <div className="daily-popup" style={{ background: "linear-gradient(135deg,#2d0a5e,#1a0533)", border: "2px solid rgba(255,215,0,0.5)", borderRadius: "24px", padding: "36px 28px", maxWidth: "320px", width: "100%", textAlign: "center" }}>
@@ -941,7 +1457,6 @@ export default function App() {
         
         {dailyCollected && <div style={{ position: "fixed", top: "16px", left: "50%", transform: "translateX(-50%)", zIndex: 400, background: "linear-gradient(135deg,#FFD700,#FF9800)", borderRadius: "12px", padding: "10px 22px", color: "#1a0533", fontWeight: 900, fontSize: "1rem", animation: "bounceIn 0.4s forwards", whiteSpace: "nowrap" }}>🎁 +{DAILY_REWARD}🪙 تم الاستلام!</div>}
         
-        {/* Leaderboard overlay */}
         {showLeaderboard && (
           <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.75)", zIndex: 300, display: "flex", alignItems: "flex-end", justifyContent: "center" }}>
             <div className="lb-panel" style={{ background: "linear-gradient(180deg,#2d0a5e,#1a0533)", border: "1px solid rgba(168,85,247,0.4)", borderRadius: "24px 24px 0 0", padding: "0 0 32px", width: "100%", maxWidth: "480px", maxHeight: "80vh", display: "flex", flexDirection: "column" }}>
@@ -981,7 +1496,6 @@ export default function App() {
           </div>
         )}
         
-        {/* Lucky Wheel overlay */}
         {showLuckyWheel && (
           <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.85)", zIndex: 400, display: "flex", alignItems: "center", justifyContent: "center", padding: "20px" }}>
             <div style={{ background: "linear-gradient(135deg,#1a0533,#2d0a5e)", borderRadius: "32px", padding: "28px 20px", maxWidth: "360px", width: "100%", textAlign: "center", border: "2px solid #FFD700", boxShadow: "0 0 40px rgba(255,215,0,0.3)" }}>
@@ -1043,7 +1557,6 @@ export default function App() {
           </div>
         )}
         
-        {/* NEWS PANEL */}
         {showNewsPanel && (
           <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.85)", zIndex: 400, display: "flex", alignItems: "center", justifyContent: "center", padding: "20px" }}>
             <div style={{ background: "linear-gradient(180deg,#1a0533,#2d0a5e)", borderRadius: "28px", maxWidth: "420px", width: "100%", maxHeight: "85vh", display: "flex", flexDirection: "column", overflow: "hidden", border: "2px solid #00BCD4" }}>
@@ -1095,7 +1608,6 @@ export default function App() {
           </div>
         )}
 
-        {/* NEWS DETAIL MODAL */}
         {selectedNews && (
           <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.95)", zIndex: 500, display: "flex", alignItems: "center", justifyContent: "center", padding: "20px" }}>
             <div style={{ background: "linear-gradient(135deg,#1a0533,#2d0a5e)", borderRadius: "32px", maxWidth: "340px", width: "100%", padding: "28px", textAlign: "center", border: `2px solid ${NEWS_TYPES[selectedNews.type]?.color || "#00BCD4"}`, animation: "bounceIn 0.4s forwards" }}>
@@ -1117,7 +1629,6 @@ export default function App() {
           </div>
         )}
 
-        {/* NEWS EDITOR */}
         {showNewsEditor && (
           <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.95)", zIndex: 500, display: "flex", alignItems: "center", justifyContent: "center", padding: "20px" }}>
             <div style={{ background: "linear-gradient(135deg,#1a0533,#2d0a5e)", borderRadius: "28px", maxWidth: "450px", width: "100%", maxHeight: "90vh", overflowY: "auto", padding: "24px", border: "2px solid #FFD700" }}>
@@ -1178,147 +1689,132 @@ export default function App() {
             </div>
           </div>
         )}
-        
-        {/* Header */}
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", width: "100%", maxWidth: "400px", marginBottom: "10px" }}>
-          <h1 style={{ fontSize: "1.5rem", fontWeight: 900, background: "linear-gradient(90deg,#FF6B9D,#A855F7,#60a5fa)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", margin: 0 }}>🛒 Market Altawfer</h1>
-          <div style={{ display: "flex", gap: "6px", alignItems: "center" }}>
-            <button onClick={openLeaderboard} style={{ background: "rgba(255,215,0,0.1)", border: "1px solid rgba(255,215,0,0.3)", borderRadius: "10px", padding: "5px 10px", color: "#FFD700", fontSize: "0.8rem", cursor: "pointer", fontWeight: 700 }}>🏆</button>
-            <button onClick={() => setShowLuckyWheel(true)} style={{ background: "linear-gradient(135deg,#FFD700,#FF9800)", border: "none", borderRadius: "10px", padding: "5px 10px", color: "#1a0533", fontSize: "0.8rem", cursor: "pointer", fontWeight: 700 }}>🎡 دوران</button>
-            <button onClick={() => setShowNewsPanel(true)} style={{ background: "linear-gradient(135deg,#00BCD4,#0284C7)", border: "none", borderRadius: "10px", padding: "5px 10px", color: "#fff", fontSize: "0.8rem", cursor: "pointer", fontWeight: 700 }}>📰 أخبار</button>
-            {loggedUser === ADMIN_USER && <button onClick={openNewsEditor} style={{ background: "linear-gradient(135deg,#FF6B9D,#A855F7)", border: "none", borderRadius: "10px", padding: "5px 10px", color: "#fff", fontSize: "0.8rem", cursor: "pointer", fontWeight: 700 }}>✏️ كتابة</button>}
-            {loggedUser === ADMIN_USER && <button onClick={openAdmin} style={{ background: "rgba(168,85,247,0.15)", border: "1px solid rgba(168,85,247,0.35)", borderRadius: "10px", padding: "5px 10px", color: "#A855F7", fontSize: "0.8rem", cursor: "pointer", fontWeight: 700 }}>⚙️</button>}
-            <CoinBar />
-          </div>
-        </div>
-        
-        {/* User bar */}
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", width: "100%", maxWidth: "400px", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: "12px", padding: "8px 14px", marginBottom: "12px" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-            <div style={{ width: "32px", height: "32px", borderRadius: "50%", background: "linear-gradient(135deg,#FF6B9D,#A855F7)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "1rem", fontWeight: 800, color: "#fff" }}>{loggedUser[0].toUpperCase()}</div>
-            <div>
-              <div style={{ color: "#fff", fontWeight: 700, fontSize: "0.88rem" }}>{loggedUser}</div>
-              <div style={{ color: "rgba(255,255,255,0.35)", fontSize: "0.68rem" }}>{saveIndicator ? "💾 تم الحفظ ✓ " : "☁️ Firebase"}M{Math.min(unlockedLevels, 60)}/{LEVELS.length}</div>
-            </div>
-          </div>
-          <button onClick={handleLogout} style={{ background: "rgba(255,50,50,0.12)", border: "1px solid rgba(255,50,50,0.25)", borderRadius: "8px", padding: "5px 12px", color: "rgba(255,100,100,0.9)", fontSize: "0.78rem", cursor: "pointer" }}>خروج</button>
-        </div>
-        
-        {/* Daily card */}
-        <div style={{ width: "100%", maxWidth: "400px", marginBottom: "12px" }}>
-          {dailyAvailable ? (
-            <button onClick={() => setShowDailyPopup(true)} className="daily-glow" style={{ width: "100%", background: "linear-gradient(135deg,rgba(255,215,0,0.15),rgba(255,150,0,0.1))", border: "2px solid rgba(255,215,0,0.5)", borderRadius: "14px", padding: "11px 16px", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "space-between", boxSizing: "border-box" }}>
-              <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                <div style={{ fontSize: "1.8rem" }}>🎁</div>
-                <div style={{ textAlign: "right" }}>
-                  <div style={{ color: "#FFD700", fontWeight: 800, fontSize: "0.88rem" }}>مكافأتك اليومية جاهزة!</div>
-                  <div style={{ color: "rgba(255,255,255,0.45)", fontSize: "0.7rem" }}>استلم {DAILY_REWARD}🪙 مجاناً</div>
-                </div>
-              </div>
-              <div style={{ background: "linear-gradient(135deg,#FFD700,#FF9800)", borderRadius: "10px", padding: "5px 12px", color: "#1a0533", fontWeight: 900, fontSize: "0.82rem" }}>استلم</div>
-            </button>
-          ) : (
-            <div style={{ width: "100%", background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: "14px", padding: "9px 16px", display: "flex", alignItems: "center", justifyContent: "space-between", boxSizing: "border-box" }}>
-              <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                <div style={{ fontSize: "1.4rem", opacity: 0.3 }}>🎁</div>
-                <div>
-                  <div style={{ color: "rgba(255,255,255,0.25)", fontWeight: 700, fontSize: "0.82rem" }}>المكافأة اليومية</div>
-                  <div style={{ color: "rgba(255,255,255,0.18)", fontSize: "0.66rem" }}>تعود بعد {timeUntilNextDaily()}</div>
-                </div>
-              </div>
-              <div style={{ color: "rgba(255,255,255,0.18)", fontSize: "0.75rem" }}>✓ تم</div>
-            </div>
-          )}
-        </div>
 
-        {/* Random News Card */}
-        {randomNewsForToday && (
-          <div onClick={() => setSelectedNews(randomNewsForToday)} style={{ width: "100%", maxWidth: "400px", marginBottom: "12px", background: NEWS_TYPES[randomNewsForToday.type]?.bg || "linear-gradient(135deg,#2d0a5e,#1a0533)", borderRadius: "14px", padding: "10px 16px", cursor: "pointer", border: "1px solid rgba(255,255,255,0.2)" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-              <div style={{ fontSize: "1.8rem" }}>{randomNewsForToday.icon || "📰"}</div>
-              <div style={{ flex: 1 }}>
-                <div style={{ display: "flex", alignItems: "center", gap: "6px", flexWrap: "wrap" }}>
-                  <span style={{ background: "rgba(255,255,255,0.2)", borderRadius: "20px", padding: "2px 8px", fontSize: "0.6rem", fontWeight: 700 }}>
-                    {NEWS_TYPES[randomNewsForToday.type]?.icon} {NEWS_TYPES[randomNewsForToday.type]?.label}
-                  </span>
-                  <span style={{ color: "#fff", fontWeight: 800, fontSize: "0.85rem" }}>{randomNewsForToday.title}</span>
-                </div>
-                <p style={{ color: "rgba(255,255,255,0.7)", fontSize: "0.7rem", margin: "4px 0 0 0" }}>{randomNewsForToday.content.substring(0, 50)}...</p>
+        {showShop && (
+          <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.95)", zIndex: 500, display: "flex", alignItems: "center", justifyContent: "center", padding: "20px", overflowY: "auto" }}>
+            <div style={{ background: "linear-gradient(135deg,#1a0533,#2d0a5e)", borderRadius: "28px", maxWidth: "400px", width: "100%", padding: "24px", border: "2px solid #FFD700", maxHeight: "90vh", overflowY: "auto" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px" }}>
+                <h2 style={{ color: "#FFD700", margin: 0 }}>🛒 متجر العملات</h2>
+                <button onClick={() => { setShowShop(false); setSelectedPack(null); setPaymentMethod(null); }} style={{ background: "rgba(255,255,255,0.1)", border: "none", borderRadius: "8px", padding: "5px 12px", color: "#fff", fontSize: "1rem", cursor: "pointer" }}>✕</button>
               </div>
-              <div style={{ fontSize: "0.8rem", color: "rgba(255,255,255,0.5)" }}>📖</div>
+              
+              <p style={{ color: "rgba(255,255,255,0.5)", fontSize: "0.8rem", textAlign: "center", marginBottom: "20px" }}>
+                💰 رصيدك الحالي: <span style={{ color: "#FFD700", fontWeight: "bold" }}>{coins} 🪙</span>
+              </p>
+              
+              {!selectedPack ? (
+                <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+                  <p style={{ color: "#fff", fontWeight: "bold", marginBottom: "5px" }}>📦 اختر الباقة:</p>
+                  {COIN_PACKS.map(pack => (
+                    <div key={pack.id} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", background: "rgba(255,255,255,0.05)", borderRadius: "16px", padding: "12px 16px" }}>
+                      <div>
+                        <div style={{ color: "#FFD700", fontWeight: "bold", fontSize: "1.1rem" }}>🪙 {pack.coins}</div>
+                        <div style={{ color: "rgba(255,255,255,0.4)", fontSize: "0.7rem" }}>{pack.name}</div>
+                      </div>
+                      <button
+                        onClick={() => setSelectedPack(pack)}
+                        style={{
+                          background: "linear-gradient(135deg,#10B981,#047857)",
+                          border: "none",
+                          borderRadius: "12px",
+                          padding: "8px 20px",
+                          color: "#fff",
+                          fontWeight: "bold",
+                          cursor: "pointer"
+                        }}
+                      >
+                        {pack.priceSYP.toLocaleString()} ليرة
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              ) : !paymentMethod ? (
+                <div>
+                  <button onClick={() => setSelectedPack(null)} style={{ background: "rgba(255,255,255,0.1)", border: "none", borderRadius: "8px", padding: "5px 12px", color: "#fff", marginBottom: "15px", cursor: "pointer" }}>← رجوع</button>
+                  <p style={{ color: "#fff", fontWeight: "bold", marginBottom: "10px" }}>💳 اختر طريقة الدفع:</p>
+                  <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+                    {PAYMENT_METHODS.map(method => (
+                      <button
+                        key={method.id}
+                        onClick={() => setPaymentMethod(method)}
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "12px",
+                          background: "rgba(255,255,255,0.08)",
+                          border: "1px solid rgba(255,255,255,0.15)",
+                          borderRadius: "14px",
+                          padding: "14px",
+                          cursor: "pointer",
+                          width: "100%"
+                        }}
+                      >
+                        <span style={{ fontSize: "1.8rem" }}>{method.icon}</span>
+                        <div style={{ textAlign: "left", flex: 1 }}>
+                          <div style={{ color: "#fff", fontWeight: "bold" }}>{method.name}</div>
+                          <div style={{ color: "rgba(255,255,255,0.4)", fontSize: "0.7rem" }}>{method.instructions.substring(0, 40)}...</div>
+                        </div>
+                        <span style={{ color: "#FFD700" }}>→</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              ) : (
+                <div>
+                  <button onClick={() => setPaymentMethod(null)} style={{ background: "rgba(255,255,255,0.1)", border: "none", borderRadius: "8px", padding: "5px 12px", color: "#fff", marginBottom: "15px", cursor: "pointer" }}>← رجوع</button>
+                  
+                  <div style={{ background: "rgba(255,215,0,0.1)", borderRadius: "16px", padding: "16px", marginBottom: "20px" }}>
+                    <p style={{ color: "#FFD700", fontWeight: "bold", marginBottom: "10px" }}>📋 تفاصيل الطلب:</p>
+                    <p style={{ color: "#fff" }}>🪙 {selectedPack.coins} عملة</p>
+                    <p style={{ color: "#fff" }}>💰 {paymentMethod.id === "syriatel_cash" ? selectedPack.priceSYP.toLocaleString() + " ليرة سورية" : selectedPack.priceUSD + " USDT"}</p>
+                    <p style={{ color: "#fff" }}>💳 {paymentMethod.name}</p>
+                  </div>
+                  
+                  {paymentMethod.id === "syriatel_cash" && (
+                    <div style={{ background: "rgba(0,0,0,0.5)", borderRadius: "12px", padding: "15px", marginBottom: "15px", textAlign: "center" }}>
+                      <p style={{ color: "rgba(255,255,255,0.7)" }}>رقم Syriatel Cash:</p>
+                      <p style={{ color: "#FFD700", fontSize: "1.5rem", fontWeight: "bold", letterSpacing: "2px" }}>{paymentMethod.phoneNumber}</p>
+                      <button onClick={() => { navigator.clipboard.writeText(paymentMethod.phoneNumber); alert("✅ تم نسخ الرقم!"); }} style={{ background: "#3B82F6", border: "none", borderRadius: "8px", padding: "6px 12px", color: "#fff", cursor: "pointer" }}>📋 نسخ الرقم</button>
+                    </div>
+                  )}
+                  
+                  {paymentMethod.id === "cwallet_trc20" && (
+                    <div style={{ background: "rgba(0,0,0,0.5)", borderRadius: "12px", padding: "15px", marginBottom: "15px", textAlign: "center" }}>
+                      <p style={{ color: "rgba(255,255,255,0.7)" }}>عنوان محفظة TRC20:</p>
+                      <p style={{ color: "#FFD700", fontSize: "0.8rem", fontWeight: "bold", wordBreak: "break-all" }}>{paymentMethod.walletAddress}</p>
+                      <button onClick={() => { navigator.clipboard.writeText(paymentMethod.walletAddress); alert("✅ تم نسخ العنوان!"); }} style={{ background: "#3B82F6", border: "none", borderRadius: "8px", padding: "6px 12px", color: "#fff", cursor: "pointer" }}>📋 نسخ العنوان</button>
+                    </div>
+                  )}
+                  
+                  <div style={{ background: "rgba(255,50,50,0.15)", borderRadius: "10px", padding: "12px", marginBottom: "15px" }}>
+                    <p style={{ color: "#FF8888", fontSize: "0.7rem", margin: 0 }}>⚠️ بعد إتمام التحويل، اضغط "تم الدفع" وستفتح محادثة تيليغرام لإرسال الإثبات</p>
+                  </div>
+                  
+                  <button
+                    onClick={() => initiatePayment(selectedPack, paymentMethod)}
+                    style={{
+                      width: "100%",
+                      background: "linear-gradient(135deg,#10B981,#047857)",
+                      border: "none",
+                      borderRadius: "12px",
+                      padding: "14px",
+                      color: "#fff",
+                      fontWeight: "bold",
+                      fontSize: "1rem",
+                      cursor: "pointer"
+                    }}
+                  >
+                    ✅ تم الدفع - إرسال الإثبات
+                  </button>
+                </div>
+              )}
+              
+              <p style={{ color: "rgba(255,255,255,0.3)", fontSize: "0.6rem", textAlign: "center", marginTop: "20px" }}>
+                🔒 الدفع عبر Syriatel Cash أو USDT (TRC20) • آمن ومضمون
+              </p>
             </div>
           </div>
         )}
-        
-        <p style={{ color: "rgba(255,215,0,0.65)", fontSize: "0.75rem", margin: "0 0 12px 0", background: "rgba(255,100,0,0.08)", border: "1px solid rgba(255,100,0,0.18)", borderRadius: "10px", padding: "4px 12px" }}>
-          💣 4 متتالية أفقياً = قنبلة تدمر الصف • 🧨 4 متتالية عمودياً = قنبلة تدمر العمود
-        </p>
-        
-        {/* World Tabs */}
-        <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "center", gap: "8px", marginBottom: "20px", maxWidth: "400px" }}>
-          {WORLDS.map((world, idx) => {
-            const worldLevelsCount = world.endLevel - world.startLevel + 1;
-            const completed = LEVELS.slice(world.startLevel, world.endLevel + 1).filter((_, i) => world.startLevel + i < unlockedLevels - 1).length;
-            return (
-              <button key={world.id} onClick={() => setSelectedWorld(idx)} className={`world-tab ${selectedWorld === idx ? "active" : ""}`} style={{
-                padding: "10px 16px",
-                borderRadius: "30px",
-                background: selectedWorld === idx ? "linear-gradient(135deg,#FF6B9D,#A855F7)" : "rgba(255,255,255,0.08)",
-                border: "1px solid rgba(255,255,255,0.15)",
-                color: selectedWorld === idx ? "#fff" : "rgba(255,255,255,0.7)",
-                fontSize: "0.85rem",
-                fontWeight: 600,
-                cursor: "pointer",
-                transition: "all 0.2s",
-                display: "flex",
-                alignItems: "center",
-                gap: "6px"
-              }}>
-                <span>{world.icon}</span>
-                <span>{world.name.split(" ")[1] || world.name}</span>
-                <span style={{ fontSize: "0.7rem", opacity: 0.8 }}>({completed}/{worldLevelsCount})</span>
-              </button>
-            );
-          })}
-        </div>
-        
-        {/* Current World Info */}
-        <div style={{ background: currentWorld.color, borderRadius: "16px", padding: "12px 20px", marginBottom: "16px", textAlign: "center", width: "100%", maxWidth: "400px" }}>
-          <div style={{ fontSize: "2rem" }}>{currentWorld.icon}</div>
-          <div style={{ color: "#fff", fontWeight: 900, fontSize: "1.1rem" }}>{currentWorld.name}</div>
-          <div style={{ color: "rgba(255,255,255,0.8)", fontSize: "0.75rem", marginTop: "4px" }}>
-            أكملت {completedInWorld} من {worldLevels.length} مرحلة
-          </div>
-          <div style={{ height: "6px", background: "rgba(0,0,0,0.3)", borderRadius: "99px", marginTop: "8px", overflow: "hidden" }}>
-            <div style={{ height: "100%", width: `${(completedInWorld / worldLevels.length) * 100}%`, background: "rgba(255,255,255,0.8)", borderRadius: "99px" }} />
-          </div>
-        </div>
-        
-        {/* Level Grid */}
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "15px", width: "100%", maxWidth: "400px", padding: "20px", backgroundColor: "rgba(0,0,0,0.2)", borderRadius: "15px" }}>
-          {worldLevels.map((level, idx) => {
-            const globalIdx = currentWorld.startLevel + idx;
-            const locked = globalIdx >= unlockedLevels;
-            const done = globalIdx < unlockedLevels - 1;
-            return (
-              <div key={globalIdx} className="lvbtn" onClick={() => !locked && startLevel(globalIdx)} style={{
-                background: locked ? "rgba(255,255,255,0.04)" : done ? "linear-gradient(135deg,#10B981,#047857)" : "linear-gradient(135deg,#FF6B9D,#A855F7)",
-                border: locked ? "1px solid rgba(255,255,255,0.07)" : "1px solid rgba(255,255,255,0.2)",
-                borderRadius: "14px",
-                padding: "12px 6px",
-                textAlign: "center",
-                cursor: locked ? "not-allowed" : "pointer",
-                opacity: locked ? 0.4 : 1,
-                boxShadow: locked ? "none" : "0 4px 14px rgba(168,85,247,0.3)"
-              }}>
-                <div style={{ fontSize: "1.3rem", marginBottom: "3px" }}>{locked ? "🔒" : done ? "✅" : "▶️"}</div>
-                <div style={{ color: "#fff", fontWeight: 800, fontSize: "1rem" }}>{level.level}</div>
-                <div style={{ color: "rgba(255,255,255,0.6)", fontSize: "0.58rem" }}>{level.moves} حركة</div>
-                <div style={{ color: "rgba(255,255,255,0.4)", fontSize: "0.55rem" }}>{level.targetScore}⭐</div>
-              </div>
-            );
-          })}
-        </div>
       </div>
     );
   }
@@ -1405,7 +1901,7 @@ export default function App() {
       <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "8px", width: "100%", maxWidth: "390px", justifyContent: "space-between" }}>
         <button onClick={() => setScreen("levelSelect")} style={{ background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.2)", borderRadius: "10px", padding: "6px 12px", color: "rgba(255,255,255,0.7)", fontSize: "0.8rem", cursor: "pointer" }}>🗺️</button>
         <span style={{ fontSize: "0.78rem", color: "rgba(255,255,255,0.35)", fontWeight: 600 }}>👤 {loggedUser}</span>
-        <CoinBar />
+        <ActionBar />
       </div>
       
       <div style={{ background: "rgba(255,255,255,0.08)", border: "1px solid rgba(168,85,247,0.3)", borderRadius: "12px", padding: "5px 18px", marginBottom: "10px", color: "#A855F7", fontWeight: 700, fontSize: "0.82rem" }}>
@@ -1464,7 +1960,6 @@ export default function App() {
         </div>
       )}
       
-      {/* Smart Bomb Menu */}
       {showSmartBombMenu && (
         <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.8)", zIndex: 400, display: "flex", alignItems: "center", justifyContent: "center" }}>
           <div style={{ background: "linear-gradient(135deg,#2d0a5e,#1a0533)", borderRadius: "24px", padding: "24px", maxWidth: "320px", width: "90%", textAlign: "center", border: "2px solid #FF6B9D" }}>
